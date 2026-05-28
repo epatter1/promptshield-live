@@ -330,6 +330,3 @@ gantt
 - Plugin architecture for new safety modules  
 
 </details>
-- `CONTRIBUTING.md`  
-
-Just tell me which one you want next.

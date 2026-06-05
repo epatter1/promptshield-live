@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { v4 as uuid } from "uuid";
 
 type Message = {
   role: "user" | "assistant";
@@ -15,7 +14,10 @@ export default function StudentPage() {
   const [messages, setMessages] = useState<Message[]>([]);
 
   useEffect(() => {
-    setSessionId(uuid());
+    setSessionId(
+      crypto.randomUUID?.() ??
+        `session-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    );
   }, []);
 
   async function sendMessage() {
@@ -26,14 +28,20 @@ export default function StudentPage() {
 
     const res = await fetch("/api/chat", {
       method: "POST",
-      body: JSON.stringify({ input, sessionId }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: input,      // <-- FIXED
+        sessionId,          // <-- FIXED
+      }),
     });
 
     const data = await res.json();
 
     const assistantMessage: Message = {
       role: "assistant",
-      content: data.safeResponse,
+      content: data.response,   // <-- matches route.ts
       risk: data.riskLevel,
     };
 
@@ -81,6 +89,7 @@ export default function StudentPage() {
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
         <button
+          type="button"
           onClick={sendMessage}
           className="px-4 py-2 bg-blue-600 text-white rounded"
         >

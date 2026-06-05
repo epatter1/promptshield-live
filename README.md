@@ -187,9 +187,9 @@ The student UI provides:
 
 ```mermaid
 flowchart TD
-    A[Student Chat UI] --> B[/api/chat]
-    B --> C[Safety Pipeline]
-    C --> D[Safe or Model Response]
+    A["Student Chat UI"] --> B["/api/chat"]
+    B --> C["Safety Pipeline"]
+    C --> D["Safe or Model Response"]
     D --> A
 ```
 

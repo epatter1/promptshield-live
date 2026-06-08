@@ -5,23 +5,29 @@ import { classify } from "@/mcp-servers/safety-classifier";
 import { callLLM } from "@/lib/llm/callLLM";
 
 export async function runSafetyPipeline(input: string) {
-  // classification is an OBJECT — extract the string category
+  // 1. Classification (returns an object)
   const classificationObj = await classify(input);
-  const classification = classificationObj.category; // <-- FIXED
+  const classification = classificationObj.category; // string: "safe" | "suspicious" | "unsafe"
 
+  // 2. Injection detection (returns { injectionDetected: boolean })
   const injection = await detectInjection(input);
+
+  // 3. Risk scoring (returns { riskLevel: "low" | "medium" | "high" })
   const risk = await scoreRisk(classification, injection.injectionDetected);
 
+  // 4. Prepare response fields
   let rawResponse = "";
   let finalResponse = "";
   let rewriteApplied = false;
   let latencyMs = 0;
   let modelName = "";
 
+  // 5. Rewrite if unsafe or injected
   if (injection.injectionDetected || risk.riskLevel === "high") {
     finalResponse = await safeRewrite(input);
     rewriteApplied = true;
   } else {
+    // 6. Call LLM normally
     const llm = await callLLM(input);
 
     rawResponse = llm.output;
@@ -30,10 +36,11 @@ export async function runSafetyPipeline(input: string) {
     modelName = llm.modelName;
   }
 
+  // 7. Return full telemetry object
   return {
     input,
-    classification,              // now a STRING
-    riskLevel: risk.riskLevel,
+    classification,              // string
+    riskLevel: risk.riskLevel,   // "low" | "medium" | "high"
     injectionDetected: injection.injectionDetected,
     rewriteApplied,
     rawResponse,

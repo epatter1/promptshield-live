@@ -1,45 +1,37 @@
 "use client";
 
-interface EventRecord {
-  timestamp: string;
-  riskLevel: string;
-  injectionDetected: number | boolean;
-  rewriteApplied: number | boolean;
-  latencyMs?: number;
-  modelName?: string;
-}
+import type { EventRecord } from "@/app/types/EventRecord";
+import EventIndicators from "../../components/EventIndicators";
 
 export default function SessionSummary({ events }: { events: EventRecord[] }) {
-  if (events.length === 0) return null;
+  if (events.length === 0) {
+    return (
+      <div className="p-4 border rounded bg-white shadow-sm text-gray-600">
+        No events recorded for this session.
+      </div>
+    );
+  }
 
-  const total = events.length;
-  const highRisk = events.filter(e => e.riskLevel === "high").length;
-  const injections = events.filter(e => e.injectionDetected).length;
-  const rewrites = events.filter(e => e.rewriteApplied).length;
-
-  const avgLatency = Math.round(
-    events.reduce((sum, e) => sum + (e.latencyMs || 0), 0) / total
-  );
-
-  const first = new Date(events[0].timestamp).toLocaleString();
-  const last = new Date(events[events.length - 1].timestamp).toLocaleString();
-
-  const models = Array.from(new Set(events.map(e => e.modelName)));
+  const lastEvent = events[events.length - 1];
 
   return (
-    <div className="border rounded-lg p-4 bg-white shadow-sm">
-      <h2 className="text-xl font-semibold mb-3">Session Summary</h2>
+    <div className="p-4 border rounded bg-white shadow-sm space-y-3">
+      <h2 className="text-xl font-semibold">Session Summary</h2>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-        <div><span className="font-semibold">Total Events:</span> {total}</div>
-        <div><span className="font-semibold">High Risk:</span> {highRisk}</div>
-        <div><span className="font-semibold">Injection Attempts:</span> {injections}</div>
-        <div><span className="font-semibold">Rewrites Applied:</span> {rewrites}</div>
-        <div><span className="font-semibold">Avg Latency:</span> {avgLatency}ms</div>
-        <div><span className="font-semibold">Models Used:</span> {models.join(", ")}</div>
-        <div className="col-span-2">
-          <span className="font-semibold">Start → End:</span> {first} → {last}
+      <div className="flex items-center justify-between">
+        <div className="text-gray-700">
+          <strong>Total Events:</strong> {events.length}
         </div>
+
+        <EventIndicators event={lastEvent} />
+      </div>
+
+      <div className="text-gray-700">
+        <strong>Last Input:</strong> {lastEvent.input}
+      </div>
+
+      <div className="text-gray-700">
+        <strong>Last Safe Response:</strong> {lastEvent.safeResponse}
       </div>
     </div>
   );

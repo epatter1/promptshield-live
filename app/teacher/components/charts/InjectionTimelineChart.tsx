@@ -12,7 +12,7 @@ interface Props {
   events: EventRecord[];
 }
 
-export default function InjectionAttemptsChart({ events }: Props) {
+export default function InjectionTimelineChart({ events }: Props) {
   // Convert timestamps + filter only injection events
   const points = events
     .filter((e) => e.injectionDetected === 1 || e.injectionDetected === true)

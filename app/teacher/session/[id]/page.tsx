@@ -1,14 +1,14 @@
 import SessionClient from "./SessionClient";
 
 export default async function SessionPage({
-  params
+  params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = await params;
+  const { id } = params;
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="space-y-8">
       <h1 className="text-3xl font-bold">Session {id}</h1>
       <SessionClient id={id} />
     </div>

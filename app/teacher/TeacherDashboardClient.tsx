@@ -1,174 +1,59 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import type { EventRecord } from "@/app/types/EventRecord";
+import { useMemo } from "react";
+import FilterBar from "./components/FilterBar";
+import { useFilters } from "./context/FilterContext";
 
-import RiskDistributionChart from "./components/RiskDistributionChart";
-import InjectionAttemptsChart from "./components/InjectionAttemptsChart";
-import LatencyHistogramChart from "./components/LatencyHistogramChart";
-import SessionActivityChart from "./components/SessionActivityChart";
+import ChartCard from "./components/charts/ChartCard";
+import RiskDistributionChart from "./components/charts/RiskDistributionChart";
+import InjectionTimelineChart from "./components/charts/InjectionTimelineChart";
+import LatencyHistogramChart from "./components/charts/LatencyHistogramChart";
+import SessionActivityChart from "./components/charts/SessionActivityChart";
 
-export default function TeacherDashboardClient() {
-  const [events, setEvents] = useState<EventRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function TeacherDashboardClient({ events }: { events: any[] }) {
+  const { filters } = useFilters();
 
-  // -----------------------------
-  // FILTER STATE
-  // -----------------------------
-  const [riskFilter, setRiskFilter] = useState<"all" | "low" | "medium" | "high">("all");
-  const [injectionFilter, setInjectionFilter] = useState<"all" | "yes" | "no">("all");
-  const [rewriteFilter, setRewriteFilter] = useState<"all" | "yes" | "no">("all");
-  const [dateRange, setDateRange] = useState<"all" | "1h" | "24h" | "7d">("all");
-
-  // -----------------------------
-  // FETCH EVENTS
-  // -----------------------------
-  useEffect(() => {
-    async function load() {
-      const res = await fetch("/api/events");
-      const data = await res.json();
-      setEvents(data.events || []);
-      setLoading(false);
-    }
-    load();
-  }, []);
-
-  // -----------------------------
-  // FILTERING LOGIC
-  // -----------------------------
   const filteredEvents = useMemo(() => {
-    const now = Date.now();
+    if (!events) return [];
 
     return events.filter((e) => {
-      // Risk filter
-      if (riskFilter !== "all" && e.riskLevel !== riskFilter) return false;
+      if (filters.riskLevels.length > 0 && !filters.riskLevels.includes(e.riskLevel)) return false;
+      if (filters.injectionOnly && !e.injectionDetected) return false;
+      if (filters.rewriteOnly && !e.rewriteApplied) return false;
+      if (filters.modelNames.length > 0 && !filters.modelNames.includes(e.modelName)) return false;
+      if (filters.sessionId && e.sessionId !== filters.sessionId) return false;
 
-      // Injection filter
-      if (injectionFilter === "yes" && !e.injectionDetected) return false;
-      if (injectionFilter === "no" && e.injectionDetected) return false;
-
-      // Rewrite filter
-      if (rewriteFilter === "yes" && !e.rewriteApplied) return false;
-      if (rewriteFilter === "no" && e.rewriteApplied) return false;
-
-      // Date range filter
       const ts = new Date(e.timestamp).getTime();
-      if (dateRange === "1h" && now - ts > 3600_000) return false;
-      if (dateRange === "24h" && now - ts > 86_400_000) return false;
-      if (dateRange === "7d" && now - ts > 7 * 86_400_000) return false;
+      const now = Date.now();
+
+      if (filters.dateRange === "24h" && ts < now - 24 * 60 * 60 * 1000) return false;
+      if (filters.dateRange === "7d" && ts < now - 7 * 24 * 60 * 60 * 1000) return false;
+      if (filters.dateRange === "30d" && ts < now - 30 * 24 * 60 * 60 * 1000) return false;
 
       return true;
     });
-  }, [events, riskFilter, injectionFilter, rewriteFilter, dateRange]);
-
-  if (loading) {
-    return <div className="text-gray-600">Loading dashboard…</div>;
-  }
+  }, [events, filters]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
+      <FilterBar events={events} />
 
-      {/* -----------------------------
-          FILTER BAR
-      ------------------------------ */}
-      <div className="flex flex-wrap gap-4 p-4 bg-gray-50 border rounded-lg">
-        
-        {/* Risk Filter */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Risk</label>
-          <select
-            className="border rounded px-2 py-1"
-            value={riskFilter}
-            onChange={(e) => setRiskFilter(e.target.value as any)}
-          >
-            <option value="all">All</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-6">
+        <ChartCard title="Risk Distribution">
+          <RiskDistributionChart events={filteredEvents} />
+        </ChartCard>
 
-        {/* Injection Filter */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Injection</label>
-          <select
-            className="border rounded px-2 py-1"
-            value={injectionFilter}
-            onChange={(e) => setInjectionFilter(e.target.value as any)}
-          >
-            <option value="all">All</option>
-            <option value="yes">Detected</option>
-            <option value="no">None</option>
-          </select>
-        </div>
+        <ChartCard title="Injection Timeline">
+          <InjectionTimelineChart events={filteredEvents} />
+        </ChartCard>
 
-        {/* Rewrite Filter */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Rewrite</label>
-          <select
-            className="border rounded px-2 py-1"
-            value={rewriteFilter}
-            onChange={(e) => setRewriteFilter(e.target.value as any)}
-          >
-            <option value="all">All</option>
-            <option value="yes">Applied</option>
-            <option value="no">None</option>
-          </select>
-        </div>
+        <ChartCard title="Latency Histogram">
+          <LatencyHistogramChart events={filteredEvents} />
+        </ChartCard>
 
-        {/* Date Range Filter */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Date Range</label>
-          <select
-            className="border rounded px-2 py-1"
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value as any)}
-          >
-            <option value="all">All Time</option>
-            <option value="1h">Last Hour</option>
-            <option value="24h">Last 24 Hours</option>
-            <option value="7d">Last 7 Days</option>
-          </select>
-        </div>
-      </div>
-
-      <p className="text-gray-600">
-        Showing {filteredEvents.length} of {events.length} events
-      </p>
-
-      {/* -----------------------------
-          CHART GRID
-      ------------------------------ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-        <div className="border rounded-lg p-4 shadow-sm bg-white">
-          <h2 className="text-xl font-semibold mb-2">Risk Distribution</h2>
-          <div className="h-64">
-            <RiskDistributionChart events={filteredEvents} />
-          </div>
-        </div>
-
-        <div className="border rounded-lg p-4 shadow-sm bg-white">
-          <h2 className="text-xl font-semibold mb-2">Injection Attempts</h2>
-          <div className="h-64">
-            <InjectionAttemptsChart events={filteredEvents} />
-          </div>
-        </div>
-
-        <div className="border rounded-lg p-4 shadow-sm bg-white">
-          <h2 className="text-xl font-semibold mb-2">Latency</h2>
-          <div className="h-64">
-            <LatencyHistogramChart events={filteredEvents} />
-          </div>
-        </div>
-
-        <div className="border rounded-lg p-4 shadow-sm bg-white">
-          <h2 className="text-xl font-semibold mb-2">Session Activity</h2>
-          <div className="h-64">
-            <SessionActivityChart events={filteredEvents} />
-          </div>
-        </div>
-
+        <ChartCard title="Session Activity">
+          <SessionActivityChart events={filteredEvents} />
+        </ChartCard>
       </div>
     </div>
   );

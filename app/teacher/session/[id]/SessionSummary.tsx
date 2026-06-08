@@ -1,7 +1,7 @@
 "use client";
 
 import type { EventRecord } from "@/app/types/EventRecord";
-import EventIndicators from "../../components/EventIndicators";
+import EventIndicators from "../../components/charts/EventIndicators";
 
 export default function SessionSummary({ events }: { events: EventRecord[] }) {
   if (events.length === 0) {

@@ -13,7 +13,11 @@ export default function EChart({ option, onEvents, style }: EChartProps) {
     <ReactECharts
       option={option}
       onEvents={onEvents}
-      style={style || { height: "100%", width: "100%" }}
+      style={{
+        height: "320px",   // ⭐ FIXED HEIGHT
+        width: "100%",
+        ...style,          // allow overrides
+      }}
     />
   );
 }

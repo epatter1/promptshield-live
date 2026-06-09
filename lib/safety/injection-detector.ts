@@ -1,12 +1,15 @@
-export function detectInjection(input: string): boolean {
+export async function detectInjection(input: string): Promise<boolean> {
+  const lowered = input.toLowerCase();
+
   const patterns = [
     "ignore previous",
-    "bypass",
     "jailbreak",
-    "system override",
+    "override",
+    "system:",
+    "developer message",
+    "prompt injection",
+    "forget your instructions"
   ];
 
-  return patterns.some((p) =>
-    input.toLowerCase().includes(p.toLowerCase())
-  );
+  return patterns.some(p => lowered.includes(p));
 }

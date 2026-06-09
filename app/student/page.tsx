@@ -4,49 +4,99 @@ import { useState } from "react";
 
 export default function StudentPage() {
   const [input, setInput] = useState("");
-  const [response, setResponse] = useState("");
-  const [risk, setRisk] = useState("");
+  const [response, setResponse] = useState<string>("");
+  const [riskLevel, setRiskLevel] = useState<string>("");
+  const [riskScore, setRiskScore] = useState<string>("");
+  const [alertReason, setAlertReason] = useState<string>("");
+
+  const sessionId = "student-session";
+
+  function safeString(value: any): string {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "string") return value;
+    return JSON.stringify(value);
+  }
+
+  function riskColor(level: string) {
+    switch (level) {
+      case "SAFE": return "text-green-600";
+      case "LOW": return "text-yellow-600";
+      case "MEDIUM": return "text-orange-600";
+      case "HIGH": return "text-red-600";
+      case "CRITICAL": return "text-red-800 font-bold";
+      default: return "";
+    }
+  }
 
   async function sendMessage() {
     const res = await fetch("/api/chat", {
       method: "POST",
-      body: JSON.stringify({
-        input,
-        sessionId: "demo-session", // Phase 7 will make this dynamic
-      }),
+      body: JSON.stringify({ sessionId, input }),
     });
 
     const data = await res.json();
-    setResponse(data.safety.safe ? input : data.safety.response);
-    setRisk(data.safety.riskLevel);
+
+    const rewritten = safeString(data.rewritten);
+    const output = safeString(data.output);
+
+    if (rewritten) {
+      setResponse(rewritten);
+    } else if (output) {
+      setResponse(output);
+    } else {
+      setResponse("No response received.");
+    }
+
+    setRiskLevel(safeString(data.riskLevel));
+    setRiskScore(safeString(data.riskScore));
+    setAlertReason(safeString(data.alert));
   }
 
   return (
-    <div className="p-8 space-y-4">
-      <h1 className="text-2xl font-bold">Student Chat</h1>
+    <div className="p-6 w-full max-w-5xl mx-auto space-y-6">
+      <h1 className="text-3xl font-bold">Student Chat</h1>
 
-      <textarea
-        className="border p-2 w-full"
-        rows={4}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
+      <div className="space-y-4">
+        <textarea
+          className="w-full border p-3 rounded text-lg"
+          rows={4}
+          placeholder="Type your message..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+        />
 
-      <button
-        onClick={sendMessage}
-        className="px-4 py-2 bg-blue-600 text-white rounded"
-      >
-        Send
-      </button>
+        <button
+          onClick={sendMessage}
+          className="px-6 py-3 bg-blue-600 text-white rounded text-lg"
+        >
+          Send
+        </button>
+      </div>
 
       {response && (
-        <div className="mt-4 p-4 border rounded bg-gray-50">
-          <p className="font-semibold">Response:</p>
-          <p>{response}</p>
+        <div className="border p-4 rounded bg-gray-50">
+          <h2 className="font-semibold mb-2 text-xl">Response</h2>
+          <p className="whitespace-pre-wrap text-lg">{safeString(response)}</p>
+        </div>
+      )}
 
-          <p className="mt-2 text-sm text-gray-500">
-            Risk Level: {risk}
+      {(riskLevel || riskScore || alertReason) && (
+        <div className="border p-4 rounded bg-gray-100">
+          <h2 className="font-semibold mb-2 text-xl">Safety Metadata</h2>
+
+          <p className={`text-lg ${riskColor(riskLevel)}`}>
+            <strong>Risk Level:</strong> {riskLevel}
           </p>
+
+          <p className="text-lg">
+            <strong>Risk Score:</strong> {riskScore}
+          </p>
+
+          {alertReason && (
+            <p className="text-lg text-red-600">
+              <strong>Alert:</strong> {alertReason}
+            </p>
+          )}
         </div>
       )}
     </div>

@@ -1,24 +1,19 @@
-import Groq from "groq-sdk";
+import { semanticCategory, semanticRiskLevel } from "./semantic";
 
-const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
+/**
+ * Semantic-driven categorical risk classifier.
+ * Uses the semantic model to determine SAFE → CRITICAL.
+ */
+export async function classifyRisk(
+  input: string
+): Promise<"SAFE" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"> {
+  // semanticRiskLevel() already maps categories → risk levels
+  return await semanticRiskLevel(input);
+}
 
-export async function classifyRisk(input: string) {
-  const prompt = `
-You are a security classifier. Rate the risk level of the user's input.
-
-Risk categories:
-SAFE, LOW, MEDIUM, HIGH, CRITICAL
-
-Respond with ONLY one of those.
-`;
-
-  const completion = await client.chat.completions.create({
-    model: "llama-3.1-8b-instant",
-    messages: [
-      { role: "system", content: prompt },
-      { role: "user", content: input }
-    ]
-  });
-
-  return completion.choices[0].message.content?.trim() || "SAFE";
+/**
+ * Optional: expose semantic category directly for dashboards.
+ */
+export async function classifySemanticCategory(input: string) {
+  return await semanticCategory(input);
 }

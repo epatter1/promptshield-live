@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db/turso";
+import { db } from "@/lib/db/client";
 
 export async function GET() {
   const result = await db.execute(

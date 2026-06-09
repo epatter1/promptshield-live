@@ -1,29 +1,68 @@
-import { NextResponse } from "next/server";
-import { runSafetyPipeline } from "@/lib/safety/pipeline";
-import { logEvent } from "@/lib/telemetry/logEvent";
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db/turso";
+import Groq from "groq-sdk";
 
-export async function POST(req: Request) {
-  const start = Date.now();
-  const { input, sessionId } = await req.json();
+import { detectSemanticJailbreak } from "@/lib/safety/semantic";
+import { classifyRisk } from "@/lib/safety/risk";
 
-  const safety = await runSafetyPipeline(input);
+const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-  const latencyMs = Date.now() - start;
+export async function POST(request: NextRequest) {
+  try {
+    const { input, sessionId } = await request.json();
+    const start = Date.now();
 
-  await logEvent({
-    sessionId,
-    input,
-    rawResponse: safety.safe ? undefined : input,
-    safeResponse: safety.safe ? input : safety.response,
-    classification: safety.classification,
-    riskLevel: safety.riskLevel,
-    injectionDetected: safety.injectionDetected,
-    rewriteApplied: !safety.safe,
-    modelName: "placeholder-llm",
-    latencyMs,
-    sourceIp: req.headers.get("x-forwarded-for") ?? "unknown",
-    userAgent: req.headers.get("user-agent") ?? "unknown",
-  });
+    const semanticRisk = await detectSemanticJailbreak(input);
 
-  return NextResponse.json({ safety });
+    const keywordInjection =
+      /jailbreak|ignore previous|system override|bypass/i.test(input);
+
+    const injectionDetected =
+      keywordInjection || semanticRisk === "JAILBREAK" ? 1 : 0;
+
+    const riskLevel = await classifyRisk(input);
+
+    const completion = await client.chat.completions.create({
+      model: "llama-3.1-8b-instant",
+      messages: [{ role: "user", content: input }],
+    });
+
+    const output = completion.choices[0].message.content;
+    const latencyMs = Date.now() - start;
+
+    await db.execute(
+      `INSERT INTO PromptShieldEvents 
+        (timestamp, sessionId, input, riskLevel, injectionDetected, latencyMs)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        new Date().toISOString(),
+        sessionId,
+        input,
+        riskLevel,
+        injectionDetected,
+        latencyMs,
+      ]
+    );
+
+    return NextResponse.json({
+      safety: {
+        safe: injectionDetected === 0 && semanticRisk === "SAFE",
+        response: output,
+        riskLevel,
+      },
+    });
+  } catch (err) {
+    console.error("CHAT ROUTE ERROR:", err);
+
+    return NextResponse.json(
+      {
+        safety: {
+          safe: false,
+          response: "Server error occurred.",
+          riskLevel: "CRITICAL",
+        },
+      },
+      { status: 500 }
+    );
+  }
 }

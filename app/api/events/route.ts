@@ -3,12 +3,10 @@ import { db } from "@/lib/db/turso";
 
 export async function GET() {
   const result = await db.execute(
-    "SELECT * FROM PromptShieldEvents ORDER BY timestamp ASC LIMIT 500"
+    "SELECT * FROM PromptShieldEvents ORDER BY timestamp ASC"
   );
 
-  const events = result.rows;
-
   return NextResponse.json({
-    events,
+    events: result.rows,
   });
 }

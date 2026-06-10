@@ -16,13 +16,30 @@ export default function DashboardClient() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [sessionEvents, setSessionEvents] = useState<EventRow[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Load all events
+  async function loadEvents() {
+    const res = await fetch("/api/events", { cache: "no-store" });
+    const data = await res.json();
+    setEvents(data.events);
+  }
+
   useEffect(() => {
-    fetch("/api/events")
-      .then((res) => res.json())
-      .then((data) => setEvents(data.events));
+    loadEvents();
   }, []);
+
+  // Refresh button handler
+  async function refreshDashboard() {
+    setRefreshing(true);
+    await loadEvents();
+    if (selectedSession) {
+      const res = await fetch(`/api/session/${selectedSession}`, { cache: "no-store" });
+      const data = await res.json();
+      setSessionEvents(data.events);
+    }
+    setRefreshing(false);
+  }
 
   // Load events for selected session
   useEffect(() => {
@@ -84,10 +101,10 @@ export default function DashboardClient() {
       e.latencyMs < 250
         ? "<250ms"
         : e.latencyMs < 500
-        ? "250-500ms"
-        : e.latencyMs < 1000
-        ? "500ms-1s"
-        : ">1s";
+          ? "250-500ms"
+          : e.latencyMs < 1000
+            ? "500ms-1s"
+            : ">1s";
     latencyBuckets[bucket] = (latencyBuckets[bucket] || 0) + 1;
   }
 
@@ -134,67 +151,99 @@ export default function DashboardClient() {
   };
 
   // ---- Unique sessions ----
-  const uniqueSessions = Array.from(
-    new Set(events.map((e) => e.sessionId))
-  );
+  const uniqueSessions = Array.from(new Set(events.map((e) => e.sessionId)));
 
   return (
-    <div className="grid grid-cols-4 gap-6">
-      {/* Session List */}
-      <div className="col-span-1 border-r pr-4">
-        <h3 className="text-lg font-semibold mb-3">Sessions</h3>
+    <div className="space-y-6">
 
-        <div className="space-y-2">
-          {uniqueSessions.map((id) => (
-            <button
-              key={id}
-              onClick={() => setSelectedSession(id)}
-              className={`block w-full text-left p-2 rounded ${
-                selectedSession === id
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 hover:bg-gray-200"
-              }`}
+      {/* Header with Refresh Button */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
+
+        <button
+          onClick={refreshDashboard}
+          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm font-medium flex items-center gap-2"
+        >
+          {refreshing && (
+            <svg
+              className="animate-spin h-4 w-4 text-gray-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
             >
-              {id}
-            </button>
-          ))}
-        </div>
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z"
+              ></path>
+            </svg>
+          )}
+          <strong>Refresh</strong>
+        </button>
+
       </div>
 
-      {/* Charts + Drill Down */}
-      <div className="col-span-3 space-y-8">
-        <ReactECharts option={riskChart} style={{ height: 300 }} />
-        <ReactECharts option={injectionChart} style={{ height: 300 }} />
-        <ReactECharts option={latencyChart} style={{ height: 300 }} />
-        <ReactECharts option={activityChart} style={{ height: 300 }} />
+      <div className="grid grid-cols-4 gap-6">
+        {/* Session List */}
+        <div className="col-span-1 border-r pr-4">
+          <h3 className="text-lg font-semibold mb-3">Sessions</h3>
 
-        {/* Drill-down panel */}
-        {selectedSession && (
-          <div className="border rounded p-4 bg-white shadow">
-            <h3 className="text-lg font-semibold mb-3">
-              Session Details — {selectedSession}
-            </h3>
-
-            {sessionEvents.length === 0 ? (
-              <p className="text-gray-500">No events recorded for this session.</p>
-            ) : (
-              <ul className="space-y-2">
-                {sessionEvents.map((e, i) => (
-                  <li
-                    key={i}
-                    className="border p-2 rounded bg-gray-50"
-                  >
-                    <div><strong>Time:</strong> {e.timestamp}</div>
-                    <div><strong>Risk:</strong> {e.riskLevel}</div>
-                    <div><strong>Injection:</strong> {e.injectionDetected}</div>
-                    <div><strong>Latency:</strong> {e.latencyMs}ms</div>
-                    <div><strong>Input:</strong> {e.input}</div>
-                  </li>
-                ))}
-              </ul>
-            )}
+          <div className="space-y-2">
+            {uniqueSessions.map((id) => (
+              <button
+                key={id}
+                onClick={() => setSelectedSession(id)}
+                className={`block w-full text-left p-2 rounded ${selectedSession === id
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 hover:bg-gray-200"
+                  }`}
+              >
+                {id}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
+
+        {/* Charts + Drill Down */}
+        <div className="col-span-3 space-y-8">
+          <ReactECharts option={riskChart} style={{ height: 300 }} />
+          <ReactECharts option={injectionChart} style={{ height: 300 }} />
+          <ReactECharts option={latencyChart} style={{ height: 300 }} />
+          <ReactECharts option={activityChart} style={{ height: 300 }} />
+
+          {/* Drill-down panel */}
+          {selectedSession && (
+            <div className="border rounded p-4 bg-white shadow">
+              <h3 className="text-lg font-semibold mb-3">
+                Session Details — {selectedSession}
+              </h3>
+
+              {sessionEvents.length === 0 ? (
+                <p className="text-gray-500">No events recorded for this session.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {sessionEvents.map((e, i) => (
+                    <li key={i} className="border p-2 rounded bg-gray-50">
+                      <div><strong>Time:</strong> {e.timestamp}</div>
+                      <div><strong>Risk:</strong> {e.riskLevel}</div>
+                      <div><strong>Injection:</strong> {e.injectionDetected}</div>
+                      <div><strong>Latency:</strong> {e.latencyMs}ms</div>
+                      <div><strong>Input:</strong> {e.input}</div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { db } from "@/lib/db/turso";
+import { db } from "@/lib/db/client";
 import { randomUUID } from "crypto";
 
 export async function logEvent(event: {

@@ -5,5 +5,9 @@ export default function TeacherLayout({
 }: {
   children: ReactNode;
 }) {
-  return <div className="p-8">{children}</div>;
+  return (
+    <div className="min-h-screen bg-gray-100 p-8">
+      {children}
+    </div>
+  );
 }

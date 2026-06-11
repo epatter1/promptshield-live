@@ -1,3 +1,4 @@
+// ——— SAME IMPORTS ———
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,6 +9,7 @@ import RiskBadge from "./components/RiskBadge";
 import CategoryFilterBar from "./components/CategoryFilterBar";
 import RiskFilterBar from "./components/RiskFilterBar";
 
+// ——— SAME TYPES ———
 type EventRow = {
   id: number;
   timestamp: string;
@@ -24,7 +26,6 @@ type EventRow = {
   modelName: string;
 };
 
-// ⭐ OFFICIAL CATEGORY WHITELIST
 const VALID_CATEGORIES = [
   "GENERAL",
   "SAFE",
@@ -41,6 +42,7 @@ const VALID_CATEGORIES = [
 ];
 
 export default function DashboardClient() {
+  // ——— SAME STATE ———
   const [events, setEvents] = useState<EventRow[]>([]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [sessionEvents, setSessionEvents] = useState<EventRow[]>([]);
@@ -49,6 +51,7 @@ export default function DashboardClient() {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [riskFilter, setRiskFilter] = useState<string | null>(null);
 
+  // ——— SAME FETCH LOGIC ———
   async function loadEvents() {
     const res = await fetch("/api/events", { cache: "no-store" });
     const data = await res.json();
@@ -80,19 +83,45 @@ export default function DashboardClient() {
       .then((data) => setSessionEvents(data.events));
   }, [selectedSession]);
 
-  // ⭐ CLEAN CATEGORY FILTERING
+  // ——— FILTERING ———
   const filteredEvents = events.filter((e) => {
     const categoryMatch = categoryFilter ? e.classification === categoryFilter : true;
     const riskMatch = riskFilter ? e.riskLevel === riskFilter : true;
     return categoryMatch && riskMatch;
   });
 
-  // ⭐ ONLY SHOW VALID CATEGORIES THAT ACTUALLY APPEAR
   const uniqueCategories = VALID_CATEGORIES.filter((cat) =>
     events.some((e) => e.classification === cat)
   );
 
-  // ---- Risk distribution ----
+  // ——— MIRROR THEME COLORS ———
+  const chromeGradient = {
+    type: "linear",
+    x: 0,
+    y: 0,
+    x2: 0,
+    y2: 1,
+    colorStops: [
+      { offset: 0, color: "#ffffff" },
+      { offset: 0.25, color: "#d1d5db" },
+      { offset: 0.5, color: "#9ca3af" },
+      { offset: 0.75, color: "#6b7280" },
+      { offset: 1, color: "#111827" }
+    ]
+  };
+
+  const mirrorBackground = {
+    type: "radial",
+    x: 0.5,
+    y: 0.4,
+    r: 0.9,
+    colorStops: [
+      { offset: 0, color: "#1f2937" },
+      { offset: 1, color: "#111827" }
+    ]
+  };
+
+  // ——— RISK CHART ———
   const riskCounts = filteredEvents.reduce(
     (acc: Record<string, number>, e) => {
       acc[e.riskLevel] = (acc[e.riskLevel] || 0) + 1;
@@ -102,19 +131,30 @@ export default function DashboardClient() {
   );
 
   const riskChart = {
-    title: { text: "Risk Distribution" },
-    xAxis: { type: "category", data: Object.keys(riskCounts) },
-    yAxis: { type: "value" },
+    backgroundColor: mirrorBackground,
+    title: { text: "Risk Distribution", textStyle: { color: "#e5e7eb" } },
+    xAxis: {
+      type: "category",
+      data: Object.keys(riskCounts),
+      axisLine: { lineStyle: { color: "#9ca3af" } },
+      axisLabel: { color: "#e5e7eb" }
+    },
+    yAxis: {
+      type: "value",
+      axisLine: { lineStyle: { color: "#9ca3af" } },
+      axisLabel: { color: "#e5e7eb" },
+      splitLine: { lineStyle: { color: "rgba(255,255,255,0.1)" } }
+    },
     series: [
       {
         type: "bar",
         data: Object.values(riskCounts),
-        itemStyle: { color: "#3b82f6" },
+        itemStyle: { color: chromeGradient },
       },
     ],
   };
 
-  // ---- Injection timeline ----
+  // ——— INJECTION CHART ———
   const injectionPoints = filteredEvents
     .filter((e) => e.injectionDetected === 1)
     .map((e) => ({
@@ -123,20 +163,25 @@ export default function DashboardClient() {
     }));
 
   const injectionChart = {
-    title: { text: "Injection Attempts Over Time" },
-    xAxis: { type: "time" },
+    backgroundColor: mirrorBackground,
+    title: { text: "Injection Attempts Over Time", textStyle: { color: "#e5e7eb" } },
+    xAxis: { type: "time", axisLabel: { color: "#e5e7eb" } },
     yAxis: { type: "value", show: false },
     series: [
       {
         type: "scatter",
         data: injectionPoints,
-        symbolSize: 12,
-        itemStyle: { color: "#ef4444" },
+        symbolSize: 14,
+        itemStyle: {
+          color: chromeGradient,
+          shadowBlur: 20,
+          shadowColor: "rgba(255,255,255,0.4)"
+        },
       },
     ],
   };
 
-  // ---- Latency histogram ----
+  // ——— LATENCY CHART ———
   const latencyBuckets: Record<string, number> = {};
   for (const e of filteredEvents) {
     const bucket =
@@ -151,21 +196,29 @@ export default function DashboardClient() {
   }
 
   const latencyChart = {
-    title: { text: "Latency Histogram" },
-    xAxis: { type: "category", data: Object.keys(latencyBuckets) },
-    yAxis: { type: "value" },
+    backgroundColor: mirrorBackground,
+    title: { text: "Latency Histogram", textStyle: { color: "#e5e7eb" } },
+    xAxis: {
+      type: "category",
+      data: Object.keys(latencyBuckets),
+      axisLabel: { color: "#e5e7eb" }
+    },
+    yAxis: {
+      type: "value",
+      axisLabel: { color: "#e5e7eb" },
+      splitLine: { lineStyle: { color: "rgba(255,255,255,0.1)" } }
+    },
     series: [
       {
         type: "bar",
         data: Object.values(latencyBuckets),
-        itemStyle: { color: "#10b981" },
+        itemStyle: { color: chromeGradient },
       },
     ],
   };
 
-  // ---- Session Activity Timeline ----
+  // ——— ACTIVITY CHART ———
   const activityMap: Record<string, number> = {};
-
   for (const e of filteredEvents) {
     const minute = new Date(e.timestamp);
     minute.setSeconds(0, 0);
@@ -178,37 +231,55 @@ export default function DashboardClient() {
   }));
 
   const activityChart = {
-    title: { text: "Session Activity Over Time" },
-    xAxis: { type: "time" },
-    yAxis: { type: "value" },
+    backgroundColor: mirrorBackground,
+    title: { text: "Session Activity Over Time", textStyle: { color: "#e5e7eb" } },
+    xAxis: { type: "time", axisLabel: { color: "#e5e7eb" } },
+    yAxis: {
+      type: "value",
+      axisLabel: { color: "#e5e7eb" },
+      splitLine: { lineStyle: { color: "rgba(255,255,255,0.1)" } }
+    },
     series: [
       {
         type: "line",
         data: activityData,
         smooth: true,
-        lineStyle: { color: "#6366f1", width: 3 },
-        areaStyle: { color: "rgba(99, 102, 241, 0.2)" },
+        lineStyle: { color: "#f3f4f6", width: 3 },
+        areaStyle: {
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: "rgba(255,255,255,0.4)" },
+              { offset: 1, color: "rgba(255,255,255,0)" }
+            ]
+          }
+        },
       },
     ],
   };
 
+  // ——— UNIQUE SESSIONS ———
   const uniqueSessions = Array.from(
     new Set(filteredEvents.map((e) => e.sessionId))
   );
 
+  // ——— RENDER ———
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6 bg-gray-900 min-h-screen p-6 text-gray-100">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
 
         <button
           onClick={refreshDashboard}
-          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm font-medium flex items-center gap-2"
+          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium flex items-center gap-2"
         >
           {refreshing && (
             <svg
-              className="animate-spin h-4 w-4 text-gray-600"
+              className="animate-spin h-4 w-4 text-gray-300"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -232,22 +303,19 @@ export default function DashboardClient() {
         </button>
       </div>
 
-      {/* CATEGORY FILTER BAR */}
       <CategoryFilterBar
         categories={uniqueCategories}
         active={categoryFilter}
         onSelect={setCategoryFilter}
       />
 
-      {/* RISK FILTER BAR */}
       <RiskFilterBar
         active={riskFilter}
         onSelect={setRiskFilter}
       />
 
       <div className="grid grid-cols-4 gap-6">
-        {/* Session List */}
-        <div className="col-span-1 border-r pr-4">
+        <div className="col-span-1 border-r border-gray-700 pr-4">
           <h3 className="text-lg font-semibold mb-3">Sessions</h3>
 
           <div className="space-y-2">
@@ -258,7 +326,7 @@ export default function DashboardClient() {
                 className={`block w-full text-left p-2 rounded ${
                   selectedSession === id
                     ? "bg-blue-600 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
+                    : "bg-gray-800 hover:bg-gray-700"
                 }`}
               >
                 {id}
@@ -267,26 +335,24 @@ export default function DashboardClient() {
           </div>
         </div>
 
-        {/* Charts + Drill Down */}
         <div className="col-span-3 space-y-8">
           <ReactECharts option={riskChart} style={{ height: 300 }} />
           <ReactECharts option={injectionChart} style={{ height: 300 }} />
           <ReactECharts option={latencyChart} style={{ height: 300 }} />
           <ReactECharts option={activityChart} style={{ height: 300 }} />
 
-          {/* Drill-down panel */}
           {selectedSession && (
-            <div className="border rounded p-4 bg-white shadow">
+            <div className="border border-gray-700 rounded p-4 bg-gray-800 shadow">
               <h3 className="text-lg font-semibold mb-3">
                 Session Details — {selectedSession}
               </h3>
 
               {sessionEvents.length === 0 ? (
-                <p className="text-gray-500">No events recorded for this session.</p>
+                <p className="text-gray-400">No events recorded for this session.</p>
               ) : (
                 <ul className="space-y-2">
                   {sessionEvents.map((e, i) => (
-                    <li key={i} className="border p-2 rounded bg-gray-50">
+                    <li key={i} className="border border-gray-700 p-2 rounded bg-gray-900">
                       <div><strong>Time:</strong> {e.timestamp}</div>
 
                       <div className="flex items-center gap-2">
@@ -304,14 +370,14 @@ export default function DashboardClient() {
                       <div><strong>Latency:</strong> {e.latencyMs}ms</div>
 
                       <div><strong>Input:</strong></div>
-                      <pre className="bg-white p-2 rounded border whitespace-pre-wrap">
+                      <pre className="bg-gray-800 p-2 rounded border border-gray-700 whitespace-pre-wrap">
                         {e.input}
                       </pre>
 
                       {e.safeResponse && (
                         <>
                           <div><strong>Safe Response:</strong></div>
-                          <pre className="bg-white p-2 rounded border whitespace-pre-wrap">
+                          <pre className="bg-gray-800 p-2 rounded border border-gray-700 whitespace-pre-wrap">
                             {e.safeResponse}
                           </pre>
                         </>
@@ -320,7 +386,7 @@ export default function DashboardClient() {
                       {e.rawResponse && (
                         <>
                           <div><strong>Raw Response:</strong></div>
-                          <pre className="bg-white p-2 rounded border whitespace-pre-wrap">
+                          <pre className="bg-gray-800 p-2 rounded border border-gray-700 whitespace-pre-wrap">
                             {e.rawResponse}
                           </pre>
                         </>

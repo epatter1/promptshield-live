@@ -330,6 +330,3 @@ gantt
 - Plugin architecture for new safety modules  
 
 </details>
-- a **version aligned with your Phase 1–7 rebuild flow**
-
-Just tell me what direction you want next.

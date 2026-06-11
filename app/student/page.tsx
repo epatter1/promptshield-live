@@ -5,6 +5,7 @@ import { useState } from "react";
 export default function StudentPage() {
   const [input, setInput] = useState("");
   const [response, setResponse] = useState<string>("");
+  const [semanticCategory, setSemanticCategory] = useState<string>("");
   const [riskLevel, setRiskLevel] = useState<string>("");
   const [riskScore, setRiskScore] = useState<string>("");
   const [alertReason, setAlertReason] = useState<string>("");
@@ -44,6 +45,7 @@ export default function StudentPage() {
     const rewritten = safeString(data.rewritten);
     const output = safeString(data.output);
 
+    // Prefer rewritten text if present
     if (rewritten) {
       setResponse(rewritten);
     } else if (output) {
@@ -52,6 +54,7 @@ export default function StudentPage() {
       setResponse("No response received.");
     }
 
+    setSemanticCategory(safeString(data.semanticCategory));
     setRiskLevel(safeString(data.riskLevel));
     setRiskScore(safeString(data.riskScore));
     setAlertReason(safeString(data.alert));
@@ -111,6 +114,7 @@ export default function StudentPage() {
         </div>
       </div>
 
+      {/* MODEL RESPONSE */}
       {response && (
         <div className="border p-4 rounded bg-gray-50">
           <h2 className="font-semibold mb-2 text-xl">Response</h2>
@@ -118,9 +122,16 @@ export default function StudentPage() {
         </div>
       )}
 
-      {(riskLevel || riskScore || alertReason) && (
+      {/* SAFETY METADATA */}
+      {(riskLevel || riskScore || alertReason || semanticCategory) && (
         <div className="border p-4 rounded bg-gray-100">
-          <h2 className="font-semibold mb-2 text-xl">Safety Metadata</h2>
+          <h2 className="font-semibold mb-2 text-xl">Prompt Risk Level</h2>
+
+          {semanticCategory && (
+            <p className="text-lg">
+              <strong>Category:</strong> {semanticCategory}
+            </p>
+          )}
 
           <p className={`text-lg ${riskColor(riskLevel)}`}>
             <strong>Risk Level:</strong> {riskLevel}

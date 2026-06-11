@@ -18,7 +18,8 @@ interface ChatResponse {
   rewritten?: string | null;
   riskLevel: string;
   riskScore: number;
-  alert: string; // FIXED: always string
+  semanticCategory: string;   // ⭐ ADDED
+  alert: string;
 }
 
 export async function POST(req: Request) {
@@ -27,9 +28,10 @@ export async function POST(req: Request) {
     const timestamp = new Date().toISOString();
     const start = Date.now();
 
+    // --- SEMANTIC SIGNALS ---
     const riskLevel = await semanticRiskLevel(input);
     const riskScore = await computeRiskScore(input);
-    const category = await semanticCategory(input);
+    const category = await semanticCategory(input);   // ⭐ FIXED
 
     let rewriteApplied = false;
     let rewrittenText: string | null = null;
@@ -56,6 +58,7 @@ export async function POST(req: Request) {
       });
     }
 
+    // --- REWRITE PATH ---
     if (rewriteApplied) {
       const latencyMs = Date.now() - start;
 
@@ -65,7 +68,7 @@ export async function POST(req: Request) {
         input,
         safeResponse: rewrittenText,
         rawResponse: null,
-        classification: category,
+        classification: category,   // ⭐ FIXED
         riskLevel,
         injectionDetected: 0,
         rewriteApplied: 1,
@@ -80,12 +83,14 @@ export async function POST(req: Request) {
         rewritten: rewrittenText,
         riskLevel,
         riskScore,
+        semanticCategory: category,   // ⭐ ADDED
         alert: alert.reason
       };
 
       return NextResponse.json(response);
     }
 
+    // --- NORMAL COMPLETION ---
     const completion = await client.chat.completions.create({
       model: "llama-3.1-8b-instant",
       messages: [{ role: "user", content: input }]
@@ -100,7 +105,7 @@ export async function POST(req: Request) {
       input,
       safeResponse: null,
       rawResponse: output,
-      classification: category,
+      classification: category,   // ⭐ FIXED
       riskLevel,
       injectionDetected: 0,
       rewriteApplied: 0,
@@ -115,6 +120,7 @@ export async function POST(req: Request) {
       output,
       riskLevel,
       riskScore,
+      semanticCategory: category,   // ⭐ ADDED
       alert: alert.reason
     };
 

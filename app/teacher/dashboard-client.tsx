@@ -3,14 +3,42 @@
 import { useEffect, useState } from "react";
 import ReactECharts from "echarts-for-react";
 
+import CategoryBadge from "./components/CategoryBadge";
+import RiskBadge from "./components/RiskBadge";
+import CategoryFilterBar from "./components/CategoryFilterBar";
+import RiskFilterBar from "./components/RiskFilterBar";
+
 type EventRow = {
+  id: number;
   timestamp: string;
-  riskLevel: string;
-  injectionDetected: number;
-  latencyMs: number;
   sessionId: string;
   input: string;
+  rawResponse: string | null;
+  safeResponse: string | null;
+  classification: string;
+  riskLevel: string;
+  evalToxicity: number;
+  rewriteApplied: number;
+  injectionDetected: number;
+  latencyMs: number;
+  modelName: string;
 };
+
+// ⭐ OFFICIAL CATEGORY WHITELIST
+const VALID_CATEGORIES = [
+  "GENERAL",
+  "SAFE",
+  "PII",
+  "CONFIDENTIAL",
+  "FRAUD",
+  "VIOLENCE",
+  "SELF_HARM",
+  "EXTREMISM",
+  "HATE",
+  "MALWARE",
+  "JAILBREAK",
+  "MANIPULATION"
+];
 
 export default function DashboardClient() {
   const [events, setEvents] = useState<EventRow[]>([]);
@@ -18,7 +46,9 @@ export default function DashboardClient() {
   const [sessionEvents, setSessionEvents] = useState<EventRow[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Load all events
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [riskFilter, setRiskFilter] = useState<string | null>(null);
+
   async function loadEvents() {
     const res = await fetch("/api/events", { cache: "no-store" });
     const data = await res.json();
@@ -29,19 +59,19 @@ export default function DashboardClient() {
     loadEvents();
   }, []);
 
-  // Refresh button handler
   async function refreshDashboard() {
     setRefreshing(true);
     await loadEvents();
+
     if (selectedSession) {
       const res = await fetch(`/api/session/${selectedSession}`, { cache: "no-store" });
       const data = await res.json();
       setSessionEvents(data.events);
     }
+
     setRefreshing(false);
   }
 
-  // Load events for selected session
   useEffect(() => {
     if (!selectedSession) return;
 
@@ -50,8 +80,20 @@ export default function DashboardClient() {
       .then((data) => setSessionEvents(data.events));
   }, [selectedSession]);
 
+  // ⭐ CLEAN CATEGORY FILTERING
+  const filteredEvents = events.filter((e) => {
+    const categoryMatch = categoryFilter ? e.classification === categoryFilter : true;
+    const riskMatch = riskFilter ? e.riskLevel === riskFilter : true;
+    return categoryMatch && riskMatch;
+  });
+
+  // ⭐ ONLY SHOW VALID CATEGORIES THAT ACTUALLY APPEAR
+  const uniqueCategories = VALID_CATEGORIES.filter((cat) =>
+    events.some((e) => e.classification === cat)
+  );
+
   // ---- Risk distribution ----
-  const riskCounts = events.reduce(
+  const riskCounts = filteredEvents.reduce(
     (acc: Record<string, number>, e) => {
       acc[e.riskLevel] = (acc[e.riskLevel] || 0) + 1;
       return acc;
@@ -73,7 +115,7 @@ export default function DashboardClient() {
   };
 
   // ---- Injection timeline ----
-  const injectionPoints = events
+  const injectionPoints = filteredEvents
     .filter((e) => e.injectionDetected === 1)
     .map((e) => ({
       name: e.sessionId,
@@ -96,15 +138,15 @@ export default function DashboardClient() {
 
   // ---- Latency histogram ----
   const latencyBuckets: Record<string, number> = {};
-  for (const e of events) {
+  for (const e of filteredEvents) {
     const bucket =
       e.latencyMs < 250
         ? "<250ms"
         : e.latencyMs < 500
-          ? "250-500ms"
-          : e.latencyMs < 1000
-            ? "500ms-1s"
-            : ">1s";
+        ? "250-500ms"
+        : e.latencyMs < 1000
+        ? "500ms-1s"
+        : ">1s";
     latencyBuckets[bucket] = (latencyBuckets[bucket] || 0) + 1;
   }
 
@@ -124,7 +166,7 @@ export default function DashboardClient() {
   // ---- Session Activity Timeline ----
   const activityMap: Record<string, number> = {};
 
-  for (const e of events) {
+  for (const e of filteredEvents) {
     const minute = new Date(e.timestamp);
     minute.setSeconds(0, 0);
     const key = minute.toISOString();
@@ -150,13 +192,13 @@ export default function DashboardClient() {
     ],
   };
 
-  // ---- Unique sessions ----
-  const uniqueSessions = Array.from(new Set(events.map((e) => e.sessionId)));
+  const uniqueSessions = Array.from(
+    new Set(filteredEvents.map((e) => e.sessionId))
+  );
 
   return (
     <div className="space-y-6">
-
-      {/* Header with Refresh Button */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
 
@@ -188,8 +230,20 @@ export default function DashboardClient() {
           )}
           <strong>Refresh</strong>
         </button>
-
       </div>
+
+      {/* CATEGORY FILTER BAR */}
+      <CategoryFilterBar
+        categories={uniqueCategories}
+        active={categoryFilter}
+        onSelect={setCategoryFilter}
+      />
+
+      {/* RISK FILTER BAR */}
+      <RiskFilterBar
+        active={riskFilter}
+        onSelect={setRiskFilter}
+      />
 
       <div className="grid grid-cols-4 gap-6">
         {/* Session List */}
@@ -201,10 +255,11 @@ export default function DashboardClient() {
               <button
                 key={id}
                 onClick={() => setSelectedSession(id)}
-                className={`block w-full text-left p-2 rounded ${selectedSession === id
+                className={`block w-full text-left p-2 rounded ${
+                  selectedSession === id
                     ? "bg-blue-600 text-white"
                     : "bg-gray-100 hover:bg-gray-200"
-                  }`}
+                }`}
               >
                 {id}
               </button>
@@ -233,10 +288,43 @@ export default function DashboardClient() {
                   {sessionEvents.map((e, i) => (
                     <li key={i} className="border p-2 rounded bg-gray-50">
                       <div><strong>Time:</strong> {e.timestamp}</div>
-                      <div><strong>Risk:</strong> {e.riskLevel}</div>
+
+                      <div className="flex items-center gap-2">
+                        <strong>Category:</strong>
+                        <CategoryBadge category={e.classification} />
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <strong>Risk:</strong>
+                        <RiskBadge level={e.riskLevel} />
+                      </div>
+
+                      <div><strong>Risk Score:</strong> {e.evalToxicity}</div>
                       <div><strong>Injection:</strong> {e.injectionDetected}</div>
                       <div><strong>Latency:</strong> {e.latencyMs}ms</div>
-                      <div><strong>Input:</strong> {e.input}</div>
+
+                      <div><strong>Input:</strong></div>
+                      <pre className="bg-white p-2 rounded border whitespace-pre-wrap">
+                        {e.input}
+                      </pre>
+
+                      {e.safeResponse && (
+                        <>
+                          <div><strong>Safe Response:</strong></div>
+                          <pre className="bg-white p-2 rounded border whitespace-pre-wrap">
+                            {e.safeResponse}
+                          </pre>
+                        </>
+                      )}
+
+                      {e.rawResponse && (
+                        <>
+                          <div><strong>Raw Response:</strong></div>
+                          <pre className="bg-white p-2 rounded border whitespace-pre-wrap">
+                            {e.rawResponse}
+                          </pre>
+                        </>
+                      )}
                     </li>
                   ))}
                 </ul>

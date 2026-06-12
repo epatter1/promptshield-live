@@ -374,8 +374,8 @@ export default function DashboardClient() {
                   <button
                     onClick={() => setSelectedSession(sessionId)}
                     className={`w-full text-left px-2 py-1 rounded ${selectedSession === sessionId
-                        ? "bg-gray-700 text-white"
-                        : "hover:bg-gray-700 text-gray-200"
+                      ? "bg-gray-700 text-white"
+                      : "hover:bg-gray-700 text-gray-200"
                       }`}
                   >
                     {sessionId}
@@ -390,11 +390,28 @@ export default function DashboardClient() {
         <div className="md:col-span-3 space-y-6">
           {/* Charts */}
           <div className="space-y-6">
-            <ReactECharts option={riskChart} style={{ height: 260 }} />
-            <ReactECharts option={injectionChart} style={{ height: 260 }} />
-            <ReactECharts option={latencyChart} style={{ height: 260 }} />
-            <ReactECharts option={activityChart} style={{ height: 260 }} />
+            <ReactECharts
+              option={riskChart}
+              style={{ height: "220px" }}
+              className="md:!h-[260px]"
+            />
+            <ReactECharts
+              option={injectionChart}
+              style={{ height: "220px" }}
+              className="md:!h-[260px]"
+            />
+            <ReactECharts
+              option={latencyChart}
+              style={{ height: "220px" }}
+              className="md:!h-[260px]"
+            />
+            <ReactECharts
+              option={activityChart}
+              style={{ height: "220px" }}
+              className="md:!h-[260px]"
+            />
           </div>
+
 
           {/* Tabs */}
           <Tabs
@@ -553,8 +570,8 @@ export default function DashboardClient() {
                         setMobileSessionsOpen(false);
                       }}
                       className={`w-full text-left px-2 py-1 rounded ${selectedSession === sessionId
-                          ? "bg-gray-700 text-white"
-                          : "hover:bg-gray-700 text-gray-200"
+                        ? "bg-gray-700 text-white"
+                        : "hover:bg-gray-700 text-gray-200"
                         }`}
                     >
                       {sessionId}

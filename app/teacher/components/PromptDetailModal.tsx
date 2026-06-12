@@ -3,7 +3,22 @@
 import { useEffect } from "react";
 import CategoryBadge from "./CategoryBadge";
 import RiskBadge from "./RiskBadge";
-import { EventRow } from "../types/EventRow";
+
+type EventRow = {
+  id: number;
+  timestamp: string;
+  sessionId: string;
+  input: string;
+  rawResponse: string | null;
+  safeResponse: string | null;
+  classification: string;
+  riskLevel: string;
+  evalToxicity: number;
+  rewriteApplied: number;
+  injectionDetected: number;
+  latencyMs: number;
+  modelName: string;
+};
 
 type Props = {
   event: EventRow | null;
@@ -24,7 +39,7 @@ export default function PromptDetailModal({
 
   const total = sessionEvents?.length ?? 0;
 
-  // ESC + arrow key navigation
+  // ESC to close
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
@@ -41,7 +56,7 @@ export default function PromptDetailModal({
       onClick={onClose}
     >
       <div
-        className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-fadeIn"
+        className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-fadeIn scale-95"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

@@ -3,22 +3,7 @@
 import { useEffect } from "react";
 import CategoryBadge from "./CategoryBadge";
 import RiskBadge from "./RiskBadge";
-
-type EventRow = {
-  id: number;
-  timestamp: string;
-  sessionId: string;
-  input: string;
-  rawResponse: string | null;
-  safeResponse: string | null;
-  classification: string;
-  riskLevel: string;
-  evalToxicity: number;
-  rewriteApplied: number;
-  injectionDetected: number;
-  latencyMs: number;
-  modelName: string;
-};
+import { EventRow } from "../types/EventRow"; // ← use your real type
 
 type Props = {
   event: EventRow | null;
@@ -39,7 +24,7 @@ export default function PromptDetailModal({
 
   const total = sessionEvents?.length ?? 0;
 
-  // ESC to close
+  // ESC + arrow keys
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();

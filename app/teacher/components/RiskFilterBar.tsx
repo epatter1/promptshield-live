@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
+
 // Selected-state colors (from your RiskBadge)
 const RISK_SELECTED: Record<string, string> = {
   SAFE: "bg-green-100 text-green-800 border-green-300",
@@ -18,7 +20,7 @@ const RISK_UNSELECTED: Record<string, string> = {
   CRITICAL: "bg-red-900 text-white border-red-950",
 };
 
-// Hover → selected-state colors (must be explicit for Tailwind)
+// Hover → selected-state colors
 const RISK_HOVER: Record<string, string> = {
   SAFE: "hover:bg-green-100 hover:text-green-800 hover:border-green-300",
   LOW: "hover:bg-yellow-100 hover:text-yellow-800 hover:border-yellow-300",
@@ -27,19 +29,28 @@ const RISK_HOVER: Record<string, string> = {
   CRITICAL: "hover:bg-red-800 hover:text-white hover:border-red-900",
 };
 
-type Props = {
-  active: string | null;
-  onSelect: (value: string | null) => void;
-};
+export default function RiskFilterBar() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-export default function RiskFilterBar({ active, onSelect }: Props) {
+  const active = searchParams.get("risk");
   const risks = ["SAFE", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
+
+  function update(value: string | null) {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (value === null) params.delete("risk");
+    else params.set("risk", value);
+
+    const query = params.toString();
+    router.push(`/teacher${query ? `?${query}` : ""}`);
+  }
 
   return (
     <div className="flex gap-2 flex-wrap">
       {/* ALL button */}
       <button
-        onClick={() => onSelect(null)}
+        onClick={() => update(null)}
         className={`
           px-3 py-1 rounded border transition-all duration-200
           ${
@@ -59,13 +70,13 @@ export default function RiskFilterBar({ active, onSelect }: Props) {
         return (
           <button
             key={risk}
-            onClick={() => onSelect(isActive ? null : risk)}
+            onClick={() => update(isActive ? null : risk)}
             className={`
               px-3 py-1 rounded border transition-all duration-200
               ${
                 isActive
-                  ? RISK_SELECTED[risk] /* selected: no hover */
-                  : `${RISK_UNSELECTED[risk]} ${RISK_HOVER[risk]}` /* unselected: dark + hover flip */
+                  ? RISK_SELECTED[risk]
+                  : `${RISK_UNSELECTED[risk]} ${RISK_HOVER[risk]}`
               }
             `}
           >

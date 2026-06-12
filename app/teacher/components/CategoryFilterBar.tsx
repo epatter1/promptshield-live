@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
+
 const CATEGORY_COLORS: Record<string, string> = {
   GENERAL: "bg-gray-500",
   SAFE: "bg-green-500",
@@ -17,21 +19,34 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 type Props = {
   categories: string[];
-  active: string | null;
-  onSelect: (value: string | null) => void;
 };
 
-export default function CategoryFilterBar({ categories, active, onSelect }: Props) {
+export default function CategoryFilterBar({ categories }: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const active = searchParams.get("category");
+
+  function update(value: string | null) {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (value === null) params.delete("category");
+    else params.set("category", value);
+
+    const query = params.toString();
+    router.push(`/teacher${query ? `?${query}` : ""}`);
+  }
+
   return (
     <div className="flex gap-2 flex-wrap">
       {/* ALL button */}
       <button
-        onClick={() => onSelect(null)}
+        onClick={() => update(null)}
         className={`
           px-3 py-1 rounded border transition-all duration-200
           ${
             active === null
-              ? "bg-gray-100 text-gray-900 border-gray-300" 
+              ? "bg-gray-100 text-gray-900 border-gray-300"
               : "bg-gray-900 text-gray-100 border-gray-700 hover:bg-gray-100 hover:text-gray-900"
           }
         `}
@@ -47,12 +62,12 @@ export default function CategoryFilterBar({ categories, active, onSelect }: Prop
         return (
           <button
             key={cat}
-            onClick={() => onSelect(isActive ? null : cat)}
+            onClick={() => update(isActive ? null : cat)}
             className={`
               px-3 py-1 rounded border transition-all duration-200
               ${
                 isActive
-                  ? "bg-gray-100 text-gray-900 border-gray-300" 
+                  ? "bg-gray-100 text-gray-900 border-gray-300"
                   : `${color} text-white border-gray-700 hover:bg-gray-100 hover:text-gray-900`
               }
             `}

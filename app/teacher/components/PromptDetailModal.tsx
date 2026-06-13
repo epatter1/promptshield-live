@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import CategoryBadge from "./CategoryBadge";
 import RiskBadge from "./RiskBadge";
-import { EventRow } from "../types/EventRow"; // ← use your real type
+import { EventRow } from "../types/EventRow";
 
 type Props = {
   event: EventRow | null;
@@ -37,11 +37,18 @@ export default function PromptDetailModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-fadeIn scale-95"
+        className="
+          bg-gray-900 border border-gray-700 rounded-lg shadow-xl 
+          w-full max-w-3xl 
+          max-h-[90vh] 
+          overflow-y-auto overflow-x-hidden 
+          p-6 
+          animate-fadeIn 
+        "
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -70,9 +77,9 @@ export default function PromptDetailModal({
               ← Prev
             </button>
 
-            <div className="text-gray-300">
+            <div className="text-gray-300 text-sm">
               Event <strong>{currentIndex + 1}</strong> of{" "}
-              <strong>{total}</strong> in this session
+              <strong>{total}</strong>
             </div>
 
             <button
@@ -90,7 +97,7 @@ export default function PromptDetailModal({
         )}
 
         {/* Metadata */}
-        <div className="space-y-2 mb-4">
+        <div className="space-y-2 mb-4 text-sm">
           <div>
             <strong>Timestamp:</strong> {event.timestamp}
           </div>
@@ -131,7 +138,13 @@ export default function PromptDetailModal({
         {/* Input */}
         <div className="mb-4">
           <strong>Input:</strong>
-          <pre className="bg-gray-800 p-3 rounded border border-gray-700 whitespace-pre-wrap mt-1">
+          <pre
+            className="
+              bg-gray-800 p-3 rounded border border-gray-700 
+              whitespace-pre-wrap break-words 
+              mt-1 text-sm
+            "
+          >
             {event.input}
           </pre>
         </div>
@@ -140,7 +153,13 @@ export default function PromptDetailModal({
         {event.safeResponse && (
           <div className="mb-4">
             <strong>Safe Response:</strong>
-            <pre className="bg-gray-800 p-3 rounded border border-gray-700 whitespace-pre-wrap mt-1">
+            <pre
+              className="
+                bg-gray-800 p-3 rounded border border-gray-700 
+                whitespace-pre-wrap break-words 
+                mt-1 text-sm
+              "
+            >
               {event.safeResponse}
             </pre>
           </div>
@@ -150,7 +169,13 @@ export default function PromptDetailModal({
         {event.rawResponse && (
           <div className="mb-4">
             <strong>Raw Response:</strong>
-            <pre className="bg-gray-800 p-3 rounded border border-gray-700 whitespace-pre-wrap mt-1">
+            <pre
+              className="
+                bg-gray-800 p-3 rounded border border-gray-700 
+                whitespace-pre-wrap break-words 
+                mt-1 text-sm
+              "
+            >
               {event.rawResponse}
             </pre>
           </div>

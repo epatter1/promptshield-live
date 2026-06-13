@@ -91,7 +91,6 @@ export default function DashboardClient() {
     setRiskFilter(params.get("risk"));
     setCategoryFilter(params.get("category"));
   }, [searchParams]);
-
   const filteredEvents = useMemo(() => {
     return events.filter((e) => {
       const categoryMatch = categoryFilter ? e.classification === categoryFilter : true;
@@ -140,7 +139,11 @@ export default function DashboardClient() {
 
   const riskChart = {
     backgroundColor: mirrorBackground,
-    title: { text: "Risk Distribution", textStyle: { color: "#e5e7eb" } },
+    title: {
+      text: "Risk Distribution",
+      textStyle: { color: "#e5e7eb", fontSize: 12, width: "90%", overflow: "break" },
+      left: "center",
+    },
     xAxis: {
       type: "category",
       data: Object.keys(riskCounts),
@@ -171,7 +174,11 @@ export default function DashboardClient() {
 
   const injectionChart = {
     backgroundColor: mirrorBackground,
-    title: { text: "Injection Attempts Over Time", textStyle: { color: "#e5e7eb" } },
+    title: {
+      text: "Injection Attempts Over Time",
+      textStyle: { color: "#e5e7eb", fontSize: 12, width: "90%", overflow: "break" },
+      left: "center",
+    },
     xAxis: { type: "time", axisLabel: { color: "#e5e7eb" } },
     yAxis: { type: "value", show: false },
     series: [
@@ -187,7 +194,6 @@ export default function DashboardClient() {
       },
     ],
   };
-
   const latencyBuckets: Record<string, number> = {};
   for (const e of filteredEvents) {
     const bucket =
@@ -203,7 +209,11 @@ export default function DashboardClient() {
 
   const latencyChart = {
     backgroundColor: mirrorBackground,
-    title: { text: "Latency Histogram", textStyle: { color: "#e5e7eb" } },
+    title: {
+      text: "Latency Histogram",
+      textStyle: { color: "#e5e7eb", fontSize: 12, width: "90%", overflow: "break" },
+      left: "center",
+    },
     xAxis: {
       type: "category",
       data: Object.keys(latencyBuckets),
@@ -237,7 +247,11 @@ export default function DashboardClient() {
 
   const activityChart = {
     backgroundColor: mirrorBackground,
-    title: { text: "Session Activity Over Time", textStyle: { color: "#e5e7eb" } },
+    title: {
+      text: "Session Activity Over Time",
+      textStyle: { color: "#e5e7eb", fontSize: 12, width: "90%", overflow: "break" },
+      left: "center",
+    },
     xAxis: { type: "time", axisLabel: { color: "#e5e7eb" } },
     yAxis: {
       type: "value",
@@ -305,7 +319,7 @@ export default function DashboardClient() {
 
   const hasSessionsUnderFilters = uniqueSessions.length > 0;
   return (
-    <div className="bg-gray-900 min-h-screen p-4 md:p-6 text-gray-100">
+    <div className="bg-gray-900 min-h-screen p-4 md:p-6 text-gray-100 overflow-x-hidden w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl md:text-2xl font-bold">Teacher Dashboard</h1>
@@ -357,7 +371,7 @@ export default function DashboardClient() {
         </div>
       </div>
 
-      {/* Responsive layout: sidebar + main */}
+      {/* Responsive layout */}
       <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* LEFT: Session list (desktop only) */}
         <div className="hidden md:block md:col-span-1 border border-gray-700 rounded p-3 bg-gray-800 shadow">
@@ -374,8 +388,8 @@ export default function DashboardClient() {
                   <button
                     onClick={() => setSelectedSession(sessionId)}
                     className={`w-full text-left px-2 py-1 rounded ${selectedSession === sessionId
-                      ? "bg-gray-700 text-white"
-                      : "hover:bg-gray-700 text-gray-200"
+                        ? "bg-gray-700 text-white"
+                        : "hover:bg-gray-700 text-gray-200"
                       }`}
                   >
                     {sessionId}
@@ -387,31 +401,14 @@ export default function DashboardClient() {
         </div>
 
         {/* RIGHT: Charts + tabs + content */}
-        <div className="md:col-span-3 space-y-6">
+        <div className="md:col-span-3 space-y-6 overflow-x-hidden">
           {/* Charts */}
-          <div className="space-y-6">
-            <ReactECharts
-              option={riskChart}
-              style={{ height: "220px" }}
-              className="md:!h-[260px]"
-            />
-            <ReactECharts
-              option={injectionChart}
-              style={{ height: "220px" }}
-              className="md:!h-[260px]"
-            />
-            <ReactECharts
-              option={latencyChart}
-              style={{ height: "220px" }}
-              className="md:!h-[260px]"
-            />
-            <ReactECharts
-              option={activityChart}
-              style={{ height: "220px" }}
-              className="md:!h-[260px]"
-            />
+          <div className="space-y-6 w-full overflow-hidden">
+            <ReactECharts option={riskChart} style={{ height: "220px" }} className="md:!h-[260px]" />
+            <ReactECharts option={injectionChart} style={{ height: "220px" }} className="md:!h-[260px]" />
+            <ReactECharts option={latencyChart} style={{ height: "220px" }} className="md:!h-[260px]" />
+            <ReactECharts option={activityChart} style={{ height: "220px" }} className="md:!h-[260px]" />
           </div>
-
 
           {/* Tabs */}
           <Tabs
@@ -422,10 +419,9 @@ export default function DashboardClient() {
             active={activeTab}
             onChange={(id) => setActiveTab(id as TabID)}
           />
-
-          {/* Tab content: Session Details */}
+          {/* Session Details */}
           {activeTab === "session" && (
-            <div className="border border-gray-700 rounded p-4 bg-gray-800 shadow">
+            <div className="border border-gray-700 rounded p-4 bg-gray-800 shadow overflow-x-hidden">
               <h3 className="text-lg font-semibold mb-3">
                 {selectedSession
                   ? `Session Details — ${selectedSession}`
@@ -450,7 +446,7 @@ export default function DashboardClient() {
                     <li
                       key={e.id ?? `${e.sessionId}-${e.timestamp}`}
                       onClick={() => openModal(e)}
-                      className="cursor-pointer border border-gray-700 p-3 rounded bg-gray-900 hover:bg-gray-800"
+                      className="cursor-pointer border border-gray-700 p-3 rounded bg-gray-900 hover:bg-gray-800 overflow-hidden"
                     >
                       <div><strong>Time:</strong> {e.timestamp}</div>
 
@@ -479,9 +475,9 @@ export default function DashboardClient() {
             </div>
           )}
 
-          {/* Tab content: All Filtered Events */}
+          {/* All Filtered Events */}
           {activeTab === "all" && (
-            <div className="border border-gray-700 rounded p-4 bg-gray-800 shadow">
+            <div className="border border-gray-700 rounded p-4 bg-gray-800 shadow overflow-x-hidden">
               <h3 className="text-lg font-semibold mb-3">All Filtered Events</h3>
 
               {filteredEvents.length === 0 ? (
@@ -489,41 +485,51 @@ export default function DashboardClient() {
                   No events match your current filters. Try adjusting category or risk.
                 </p>
               ) : (
-                <table className="w-full text-left table-fixed">
-                  <thead>
-                    <tr className="border-b border-gray-700">
-                      <th className="py-2 w-40">Time</th>
-                      <th className="w-32">Category</th>
-                      <th className="w-24">Risk</th>
-                      <th className="w-24">Latency</th>
-                      <th className="w-auto">Prompt</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {filteredEvents.map((event) => (
-                      <tr
-                        key={event.id ?? `${event.sessionId}-${event.timestamp}`}
-                        onClick={() => openModal(event)}
-                        className="cursor-pointer hover:bg-gray-800"
-                      >
-                        <td className="py-2 text-xs md:text-sm">{event.timestamp}</td>
-                        <td><CategoryBadge category={event.classification} /></td>
-                        <td><RiskBadge level={event.riskLevel} /></td>
-                        <td>{event.latencyMs}ms</td>
-
-                        <td className="max-w-xs truncate text-gray-300 text-xs md:text-sm">
-                          {event.input}
-                        </td>
+                <div className="w-full overflow-x-auto">
+                  <table className="min-w-full text-left table-fixed">
+                    <thead>
+                      <tr className="border-b border-gray-700">
+                        <th className="py-2 w-24 md:w-40 text-xs md:text-sm">Time</th>
+                        <th className="w-24 md:w-32 text-xs md:text-sm">Category</th>
+                        <th className="w-20 md:w-24 text-xs md:text-sm">Risk</th>
+                        <th className="w-20 md:w-24 text-xs md:text-sm">Latency</th>
+                        <th className="w-40 md:w-auto text-xs md:text-sm">Prompt</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+
+                    <tbody>
+                      {filteredEvents.map((event) => (
+                        <tr
+                          key={event.id ?? `${event.sessionId}-${event.timestamp}`}
+                          onClick={() => openModal(event)}
+                          className="cursor-pointer hover:bg-gray-800"
+                        >
+                          <td className="py-2 text-xs md:text-sm truncate">
+                            {event.timestamp}
+                          </td>
+                          <td className="truncate">
+                            <CategoryBadge category={event.classification} />
+                          </td>
+                          <td className="truncate">
+                            <RiskBadge level={event.riskLevel} />
+                          </td>
+                          <td className="truncate">
+                            {event.latencyMs}ms
+                          </td>
+                          <td className="max-w-xs truncate text-gray-300 text-xs md:text-sm">
+                            {event.input}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           )}
         </div>
       </div>
+
       {/* Mobile: Sessions bottom sheet trigger */}
       <button
         onClick={() => setMobileSessionsOpen(true)}
@@ -545,7 +551,7 @@ export default function DashboardClient() {
           />
 
           {/* Bottom sheet */}
-          <div className="absolute inset-x-0 bottom-0 bg-gray-900 border-t border-gray-700 rounded-t-xl p-4 max-h-[70vh] overflow-y-auto shadow-2xl">
+          <div className="absolute inset-x-0 bottom-0 bg-gray-900 border-t border-gray-700 rounded-t-xl p-4 max-h-[70vh] overflow-y-auto shadow-2xl max-w-full overflow-hidden">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold">Sessions</h3>
               <button
@@ -570,8 +576,8 @@ export default function DashboardClient() {
                         setMobileSessionsOpen(false);
                       }}
                       className={`w-full text-left px-2 py-1 rounded ${selectedSession === sessionId
-                        ? "bg-gray-700 text-white"
-                        : "hover:bg-gray-700 text-gray-200"
+                          ? "bg-gray-700 text-white"
+                          : "hover:bg-gray-700 text-gray-200"
                         }`}
                     >
                       {sessionId}

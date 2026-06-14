@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
 
-import { semanticRiskLevel, semanticCategory } from "../../../lib/safety/semantic";
-import { computeRiskScore } from "../../../lib/safety/score";
-import { safeRewrite } from "../../../lib/safety/rewrite";
-import { evaluateAlert } from "../../../lib/safety/alerts";
+import { semanticRiskLevel, semanticCategory } from "../../teacher/lib/safety/semantic";
+import { computeRiskScore } from "../../teacher/lib/safety/score";
+import { safeRewrite } from "../../teacher/lib/safety/rewrite";
+import { evaluateAlert } from "../../teacher/lib/safety/alerts";
 
-import { logAlert } from "../../../lib/db/alerts";
-import { logEvent } from "../../../lib/db/events";
+import { logAlert } from "../../teacher/lib/db/alerts";
+import { logEvent } from "../../teacher/lib/db/events";
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 

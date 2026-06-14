@@ -1,4 +1,4 @@
-import { db } from "@/lib/db/client";
+import { db } from "@/app/teacher/lib/db/client";
 import { randomUUID } from "crypto";
 
 export async function logEvent(event: {

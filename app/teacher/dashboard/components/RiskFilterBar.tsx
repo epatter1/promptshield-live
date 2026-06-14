@@ -34,7 +34,9 @@ export default function RiskFilterBar() {
   const searchParams = useSearchParams();
 
   const active = searchParams.get("risk");
-  const risks = ["SAFE", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
+
+  // Highest → lowest severity
+  const risks = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "SAFE"];
 
   function update(value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -47,12 +49,13 @@ export default function RiskFilterBar() {
   }
 
   return (
-    <div className="flex gap-2 flex-wrap">
+    <div className="flex flex-wrap gap-2 mb-3">
       {/* ALL button */}
       <button
         onClick={() => update(null)}
         className={`
-          px-3 py-1 rounded border transition-all duration-200
+          px-3 py-1 rounded border text-sm transition-all duration-200
+          whitespace-nowrap
           ${
             active === null
               ? "bg-gray-100 text-gray-900 border-gray-300"
@@ -72,7 +75,8 @@ export default function RiskFilterBar() {
             key={risk}
             onClick={() => update(isActive ? null : risk)}
             className={`
-              px-3 py-1 rounded border transition-all duration-200
+              px-3 py-1 rounded border text-sm transition-all duration-200
+              whitespace-nowrap
               ${
                 isActive
                   ? RISK_SELECTED[risk]

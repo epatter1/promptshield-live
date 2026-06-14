@@ -27,6 +27,13 @@ export default function CategoryFilterBar({ categories }: Props) {
 
   const active = searchParams.get("category");
 
+  // ⭐ Push SAFE to the end, keep all other categories in original order
+  const ordered = [...categories].sort((a, b) => {
+    if (a === "SAFE") return 1;
+    if (b === "SAFE") return -1;
+    return 0;
+  });
+
   function update(value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -55,7 +62,7 @@ export default function CategoryFilterBar({ categories }: Props) {
       </button>
 
       {/* Category buttons */}
-      {categories.map((cat) => {
+      {ordered.map((cat) => {
         const isActive = active === cat;
         const color = CATEGORY_COLORS[cat] || "bg-gray-500";
 

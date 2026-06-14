@@ -1,4 +1,4 @@
-# **PromptShield Live**  
+# <span style="font-size: 1.4em">📘 PromptShield Live</span>  
 A real‑time classroom‑scale AI monitoring platform with a teacher dashboard, student chat interface, and event‑sourced telemetry.
 
 ---
@@ -19,7 +19,7 @@ A real‑time classroom‑scale AI monitoring platform with a teacher dashboard,
 
 ---
 
-## 📌 **Overview**
+# <span>📌</span> **Overview**
 
 <details>
 <summary><strong>Principal‑level summary</strong></summary>
@@ -37,7 +37,7 @@ The project demonstrates how to build a **safe, observable, classroom‑ready LL
 
 ---
 
-## 🖼 **Screenshots**
+# <span>🖼</span> **Screenshots**
 
 <details>
 <summary><strong>Click to expand</strong></summary>
@@ -51,13 +51,11 @@ The project demonstrates how to build a **safe, observable, classroom‑ready LL
 ### **Session Explorer**
 `/public/screenshots/session-explorer.png`
 
-> Add your actual screenshots to `public/screenshots/` and update filenames as needed.
-
 </details>
 
 ---
 
-## ✨ **Core Capabilities**
+# <span>✨</span> **Core Capabilities**
 
 <details>
 <summary><strong>Click to expand</strong></summary>
@@ -83,7 +81,7 @@ The project demonstrates how to build a **safe, observable, classroom‑ready LL
 
 ---
 
-## 🏗 **Architecture**
+# <span>🏗</span> **Architecture**
 
 <details>
 <summary><strong>System‑level architecture diagram</strong></summary>
@@ -111,7 +109,7 @@ flowchart TD
 
 ---
 
-## 📊 **Teacher Dashboard**
+# <span>📊</span> **Teacher Dashboard**
 
 <details>
 <summary><strong>Operational intelligence for educators</strong></summary>
@@ -134,29 +132,14 @@ flowchart LR
     C --> D[ECharts + Tables + Filters]
 ```
 
-The dashboard is built under:
-
-```
-app/teacher/dashboard/
-```
-
-and uses a clean, modular component structure.
-
 </details>
 
 ---
 
-## 💬 **Student Experience**
+# <span>💬</span> **Student Experience**
 
 <details>
 <summary><strong>Safe, guided LLM interaction</strong></summary>
-
-The student UI provides:
-
-- Clean chat interface  
-- Session‑scoped conversation  
-- Real‑time responses from Llama 3  
-- Automatic event logging  
 
 ```mermaid
 flowchart TD
@@ -170,7 +153,7 @@ flowchart TD
 
 ---
 
-## 🗄 **Data Model**
+# <span>🗄</span> **Data Model**
 
 <details>
 <summary><strong>Event‑sourced telemetry model</strong></summary>
@@ -189,13 +172,11 @@ flowchart TD
 | sourceIp      | text     | Client IP |
 | userAgent     | text     | Browser UA |
 
-> All safety‑related fields were removed during the v2 refactor.
-
 </details>
 
 ---
 
-## 🧰 **Tech Stack**
+# <span>🧰</span> **Tech Stack**
 
 <details>
 <summary><strong>Click to expand</strong></summary>
@@ -221,25 +202,25 @@ flowchart TD
 
 ---
 
-## ⚙️ **Installation & Setup**
+# <span>⚙️</span> **Installation & Setup**
 
 <details>
 <summary><strong>Click to expand</strong></summary>
 
-### **1. Clone the repo**
+### 1. Clone the repo
 
 ```bash
 git clone https://github.com/yourname/promptshield-live.git
 cd promptshield-live
 ```
 
-### **2. Install dependencies**
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-### **3. Create `.env.local`**
+### 3. Create `.env.local`
 
 ```env
 GROQ_API_KEY=your_key_here
@@ -247,19 +228,13 @@ TURSO_DATABASE_URL=your_url_here
 TURSO_AUTH_TOKEN=your_token_here
 ```
 
-### **4. Run database migrations (if applicable)**
-
-```bash
-npm run db:push
-```
-
-### **5. Start the dev server**
+### 4. Start the dev server
 
 ```bash
 npm run dev
 ```
 
-### **6. Open the app**
+### 5. Open the app
 
 - Student UI → http://localhost:3000/student  
 - Teacher Dashboard → http://localhost:3000/teacher  
@@ -268,7 +243,7 @@ npm run dev
 
 ---
 
-## 📂 **Project Structure**
+# <span>📂</span> **Project Structure**
 
 <details>
 <summary><strong>Click to expand</strong></summary>
@@ -298,30 +273,49 @@ promptshield-live/
 
 ---
 
-## 🗺 **Roadmap**
+# <span>🗺</span> **Roadmap**
 
 <details>
 <summary><strong>Click to expand</strong></summary>
 
-### ✔ **Completed**
-- Student chat UI  
-- Event logging + Turso integration  
-- Teacher Dashboard v2  
-- Charts + filters + sessions  
-- Auto‑refresh + manual refresh  
-- Mobile layout fixes  
-- Removal of legacy safety pipeline  
+## **PHASE 1 — Project Foundation**
+1. Initialize Next.js app  
+2. Basic UI shell  
 
-### 🔜 **Next (Phase 8)**
-- Real‑time streaming via SSE  
-- “LIVE” indicator  
-- “New events available” toast  
-- Reduced polling  
+## **PHASE 2 — Event Model + Database**
+3. Define EventRow + Session models  
+4. Turso integration  
 
-### 🚀 **Future Enhancements**
-- Forensic session explorer  
-- Export tools  
-- Classroom analytics  
-- Policy enforcement (optional future direction)
+## **PHASE 3 — Student Chat Pipeline**
+5. Build `/api/chat`  
+
+## **PHASE 4 — Teacher Dashboard v1**
+6. Basic dashboard  
+
+## **PHASE 5 — Telemetry + Safety (Removed in v2)**
+7. Safety pipeline (deprecated)  
+
+## **PHASE 6 — Dashboard v2 Architecture**
+8. New folder structure  
+9. New charts  
+10. Filters + sessions  
+
+## **PHASE 7 — Real-Time Dashboard Behavior**
+11. Auto‑refresh + manual refresh  
+12. Mobile layout fixes  
+
+## **PHASE 8 — Real-Time Streaming (Next)**
+13. SSE/WebSockets  
+14. LIVE indicator  
+15. New events toast  
+
+## **PHASE 9 — Forensic Session Explorer**
+16. Deep dive modal  
+17. Timeline navigation  
+
+## **PHASE 10 — Teacher Tools + Governance**
+18. Export tools  
+19. Notes + flags  
+20. Classroom analytics  
 
 </details>

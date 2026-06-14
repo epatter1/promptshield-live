@@ -43,13 +43,13 @@ The project demonstrates how to build a **safe, observable, classroom‑ready LL
 <summary><strong>Click to expand</strong></summary>
 
 ### **Teacher Dashboard**
-`[Looks like the result wasn't safe to show. Let's switch things up and try something else!]`
+`/public/screenshots/dashboard.png`
 
 ### **Student Chat**
-`[Looks like the result wasn't safe to show. Let's switch things up and try something else!]`
+`/public/screenshots/student-chat.png`
 
 ### **Session Explorer**
-`[Looks like the result wasn't safe to show. Let's switch things up and try something else!]`
+`/public/screenshots/session-explorer.png`
 
 > Add your actual screenshots to `public/screenshots/` and update filenames as needed.
 
@@ -207,8 +207,8 @@ flowchart TD
 - ECharts
 
 ### **Backend**
-- Next.js API Routes
-- Groq Llama 3 inference
+- Next.js API Routes  
+- Groq Llama 3 inference  
 
 ### **Database**
 - Turso (libSQL)

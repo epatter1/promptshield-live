@@ -54,7 +54,6 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
         const res = await fetch("/api/events");
         const data = await res.json();
 
-        // FIX: ensure newest → oldest with typed comparator
         const incomingEvents: EventRow[] = (data.events ?? []).sort(
           (a: EventRow, b: EventRow) =>
             new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -64,7 +63,6 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
 
         const incomingNewest = new Date(incomingEvents[0].timestamp).getTime();
 
-        // Only update if a new event arrived
         if (incomingNewest > newestTimestamp) {
           setFilteredEvents(incomingEvents);
         }
@@ -74,7 +72,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [newestTimestamp]); // stable dependency array
+  }, [newestTimestamp]);
 
   // All events in the selected session
   const sessionEvents = filteredEvents.filter(
@@ -138,6 +136,14 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
         </button>
       </div>
 
+      {/* MOBILE FILTERS ABOVE EVERYTHING */}
+      <div className="lg:hidden mb-4">
+        <FiltersPanel
+          events={events}
+          onFilterChange={setFilteredEvents}
+        />
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-6">
 
         {/* LEFT COLUMN — Charts + Table */}
@@ -162,13 +168,15 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
           </div>
         </div>
 
-        {/* RIGHT COLUMN — Filters + Sessions */}
+        {/* RIGHT COLUMN — Filters + Sessions (DESKTOP ONLY) */}
         <div className="w-full lg:w-80 flex-shrink-0 flex flex-col gap-4">
 
-          <FiltersPanel
-            events={events}
-            onFilterChange={setFilteredEvents}
-          />
+          <div className="hidden lg:block">
+            <FiltersPanel
+              events={events}
+              onFilterChange={setFilteredEvents}
+            />
+          </div>
 
           <button
             onClick={() =>

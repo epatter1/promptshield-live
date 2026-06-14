@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { EventRow } from "../types/EventRow";
 
 import ChartsPanel from "./components/ChartsPanel";
@@ -10,17 +10,24 @@ import FiltersPanel from "./components/filters/FiltersPanel";
 import PromptDetailModal from "./components/PromptDetailModal";
 
 export default function DashboardClient({ events }: { events: EventRow[] }) {
+  // Base events (updated by auto-refresh)
+  const [baseEvents, setBaseEvents] = useState<EventRow[]>(events);
+
+  // Filtered events (computed from baseEvents)
   const [filteredEvents, setFilteredEvents] = useState<EventRow[]>(events);
+
+  // Track whether filters are active
+  const [filtersActive, setFiltersActive] = useState(false);
+
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventRow | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Always compute newest timestamp safely
-  const newestTimestamp = filteredEvents.length
-    ? new Date(filteredEvents[0].timestamp).getTime()
+  const newestTimestamp = baseEvents.length
+    ? new Date(baseEvents[0].timestamp).getTime()
     : 0;
 
-  // Manual refresh handler
+  // Manual refresh
   const handleManualRefresh = async () => {
     try {
       setRefreshing(true);
@@ -32,7 +39,12 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
           new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
 
-      setFilteredEvents(sorted);
+      setBaseEvents(sorted);
+
+      // Reapply filters
+      if (!filtersActive) {
+        setFilteredEvents(sorted);
+      }
     } catch (err) {
       console.error("Manual refresh failed:", err);
     } finally {
@@ -47,7 +59,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     }
   }, [filteredEvents, selectedSessionId]);
 
-  // AUTO-REFRESH ONLY WHEN A NEW PROMPT ARRIVES
+  // AUTO-REFRESH (updates baseEvents only)
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -64,7 +76,12 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
         const incomingNewest = new Date(incomingEvents[0].timestamp).getTime();
 
         if (incomingNewest > newestTimestamp) {
-          setFilteredEvents(incomingEvents);
+          setBaseEvents(incomingEvents);
+
+          // Only update filteredEvents if no filters are active
+          if (!filtersActive) {
+            setFilteredEvents(incomingEvents);
+          }
         }
       } catch (err) {
         console.error("Auto-refresh failed:", err);
@@ -72,20 +89,18 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [newestTimestamp]);
+  }, [newestTimestamp, filtersActive]);
 
-  // All events in the selected session
+  // Session events (filtered)
   const sessionEvents = filteredEvents.filter(
     (e) => e.sessionId === selectedSessionId
   );
 
-  // Index of selected event
   const currentIndex =
     selectedEvent && sessionEvents.length > 0
       ? sessionEvents.findIndex((e) => e.id === selectedEvent.id)
       : null;
 
-  // Prev/Next navigation
   const handleNavigate = (dir: "prev" | "next") => {
     if (currentIndex === null) return;
 
@@ -100,7 +115,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
   return (
     <div className="w-full max-w-[1400px] mx-auto px-4 py-4">
 
-      {/* DASHBOARD TITLE + MANUAL REFRESH */}
+      {/* TITLE + REFRESH */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-100">
           Teacher Dashboard
@@ -136,20 +151,22 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
         </button>
       </div>
 
-      {/* MOBILE FILTERS ABOVE EVERYTHING */}
+      {/* MOBILE FILTERS */}
       <div className="lg:hidden mb-4">
         <FiltersPanel
-          events={events}
-          onFilterChange={setFilteredEvents}
+          events={baseEvents}
+          onFilterChange={(filtered, isFiltered) => {
+            setFilteredEvents(filtered);
+            setFiltersActive(isFiltered);
+          }}
         />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
 
-        {/* LEFT COLUMN — Charts + Table */}
+        {/* LEFT COLUMN */}
         <div className="flex-1 max-w-[900px] flex flex-col gap-6">
 
-          {/* Mobile: Session Details above charts */}
           <div className="lg:hidden">
             <SessionDetails
               events={filteredEvents}
@@ -168,13 +185,16 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
           </div>
         </div>
 
-        {/* RIGHT COLUMN — Filters + Sessions (DESKTOP ONLY) */}
+        {/* RIGHT COLUMN */}
         <div className="w-full lg:w-80 flex-shrink-0 flex flex-col gap-4">
 
           <div className="hidden lg:block">
             <FiltersPanel
-              events={events}
-              onFilterChange={setFilteredEvents}
+              events={baseEvents}
+              onFilterChange={(filtered, isFiltered) => {
+                setFilteredEvents(filtered);
+                setFiltersActive(isFiltered);
+              }}
             />
           </div>
 
@@ -197,7 +217,6 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
         </div>
       </div>
 
-      {/* MODAL */}
       <PromptDetailModal
         event={selectedEvent}
         sessionEvents={sessionEvents}

@@ -8,9 +8,9 @@ import {
   FILTER_BUTTON_BASE,
 } from "../../../types/theme";
 
-const RISK_LEVELS = ["SAFE", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
+const RISK_LEVELS = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "SAFE"];
 
-const CATEGORIES = [
+const VALID_CATEGORIES = [
   "SAFE",
   "PII",
   "CONFIDENTIAL",
@@ -29,18 +29,27 @@ export default function FiltersPanel({
   onFilterChange,
 }: {
   events: EventRow[];
-  onFilterChange: (filtered: EventRow[]) => void;
+  onFilterChange: (filtered: EventRow[], isFiltered: boolean) => void;
 }) {
   const [selectedRisks, setSelectedRisks] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const toggle = (value: string, list: string[], setList: (v: string[]) => void) => {
-    setList(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
-  };
+  const classifications = useMemo(() => {
+    return Array.from(
+      new Set(
+        events
+          .map((e) => e.classification)
+          .filter((c) => c && VALID_CATEGORIES.includes(c))
+      )
+    );
+  }, [events]);
 
-  const clearFilters = () => {
-    setSelectedRisks([]);
-    setSelectedCategories([]);
+  const toggle = (value: string, list: string[], setList: (v: string[]) => void) => {
+    setList(
+      list.includes(value)
+        ? list.filter((x) => x !== value)
+        : [...list, value]
+    );
   };
 
   const filtered = useMemo(() => {
@@ -56,10 +65,15 @@ export default function FiltersPanel({
     });
   }, [events, selectedRisks, selectedCategories]);
 
-  // FIX: update parent AFTER render, not during render
   useEffect(() => {
-    onFilterChange(filtered);
+    const isFiltered = selectedRisks.length > 0 || selectedCategories.length > 0;
+    onFilterChange(filtered, isFiltered);
   }, [filtered]);
+
+  const clearFilters = () => {
+    setSelectedRisks([]);
+    setSelectedCategories([]);
+  };
 
   return (
     <div className="rounded-lg bg-gray-900 border border-gray-800 p-4">
@@ -98,7 +112,7 @@ export default function FiltersPanel({
       <div>
         <div className="text-xs text-gray-400 mb-1">Category</div>
         <div className="flex flex-wrap gap-2 text-xs">
-          {CATEGORIES.map((cat) => (
+          {classifications.map((cat) => (
             <button
               key={cat}
               onClick={() =>

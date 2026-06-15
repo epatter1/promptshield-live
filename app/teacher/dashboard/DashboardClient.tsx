@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { EventRow } from "../types/EventRow";
 
 import ChartsPanel from "./components/ChartsPanel";
@@ -8,24 +8,51 @@ import EventsTable from "./components/EventsTable";
 import SessionDetails from "./components/sessions/SessionDetails";
 import FiltersPanel from "./components/filters/FiltersPanel";
 import PromptDetailModal from "./components/PromptDetailModal";
+import ArchiveManager from "./components/archive/ArchiveManager";
+import { CaretDown, CaretUp } from "./components/icons/Carets";
 
 export default function DashboardClient({ events }: { events: EventRow[] }) {
-  // Base events (updated by auto-refresh)
-  const [baseEvents, setBaseEvents] = useState<EventRow[]>(events);
+  // ⭐ Normalize IDs and generate fallback keys
+  const normalize = (rows: EventRow[]) =>
+    rows.map((e) => ({
+      ...e,
+      id: e.id != null ? String(e.id) : `${e.sessionId}-${e.timestamp}`,
+      sessionId: String(e.sessionId),
+    }));
 
-  // Filtered events (computed from baseEvents)
-  const [filteredEvents, setFilteredEvents] = useState<EventRow[]>(events);
-
-  // Track whether filters are active
+  const [baseEvents, setBaseEvents] = useState<EventRow[]>(normalize(events));
+  const [filteredEvents, setFilteredEvents] = useState<EventRow[]>(normalize(events));
   const [filtersActive, setFiltersActive] = useState(false);
+
+  const [archivedIds, setArchivedIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<EventRow | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const newestTimestamp = baseEvents.length
-    ? new Date(baseEvents[0].timestamp).getTime()
-    : 0;
+  // Load archive
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem("archivedEvents");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as string[];
+        setArchivedIds(new Set(parsed));
+      } catch { }
+    }
+  }, []);
+
+  // Persist archive
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("archivedEvents", JSON.stringify([...archivedIds]));
+  }, [archivedIds]);
+
+  // Visible events = filtered minus archived
+  const visibleEvents = filteredEvents.filter(
+    (e) => !archivedIds.has(String(e.id))
+  );
 
   // Manual refresh
   const handleManualRefresh = async () => {
@@ -34,14 +61,14 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
       const res = await fetch("/api/events");
       const data = await res.json();
 
-      const sorted = (data.events ?? []).sort(
-        (a: EventRow, b: EventRow) =>
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      const normalized = normalize(data.events ?? []);
+
+      const sorted = normalized.sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
 
       setBaseEvents(sorted);
 
-      // Reapply filters
       if (!filtersActive) {
         setFilteredEvents(sorted);
       }
@@ -52,53 +79,67 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     }
   };
 
-  // Auto-select most recent session
+  // Auto-select first session
   useEffect(() => {
-    if (!selectedSessionId && filteredEvents.length > 0) {
-      setSelectedSessionId(filteredEvents[0].sessionId);
+    if (!selectedSessionId && visibleEvents.length > 0) {
+      setSelectedSessionId(visibleEvents[0].sessionId);
     }
-  }, [filteredEvents, selectedSessionId]);
+  }, [visibleEvents, selectedSessionId]);
 
-  // AUTO-REFRESH (updates baseEvents only)
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch("/api/events");
-        const data = await res.json();
+  // Individual selection
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
-        const incomingEvents: EventRow[] = (data.events ?? []).sort(
-          (a: EventRow, b: EventRow) =>
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
+  // ⭐ Correct Select‑All / Deselect‑All
+  const toggleSelectAll = () => {
+    if (selectedIds.size === visibleEvents.length) {
+      setSelectedIds(new Set()); // deselect all
+    } else {
+      setSelectedIds(new Set(visibleEvents.map((e) => String(e.id)))); // select all
+    }
+  };
 
-        if (incomingEvents.length === 0) return;
+  // Archive selected
+  const handleArchiveSelected = () => {
+    if (selectedIds.size === 0) return;
 
-        const incomingNewest = new Date(incomingEvents[0].timestamp).getTime();
+    setArchivedIds((prev) => {
+      const next = new Set(prev);
+      selectedIds.forEach((id) => next.add(String(id)));
+      return next;
+    });
 
-        if (incomingNewest > newestTimestamp) {
-          setBaseEvents(incomingEvents);
+    setSelectedIds(new Set());
+  };
 
-          // Only update filteredEvents if no filters are active
-          if (!filtersActive) {
-            setFilteredEvents(incomingEvents);
-          }
-        }
-      } catch (err) {
-        console.error("Auto-refresh failed:", err);
-      }
-    }, 5000);
+  // Archive single event
+  const handleArchiveEvent = (id: string) => {
+    setArchivedIds((prev) => {
+      const next = new Set(prev);
+      next.add(String(id));
+      return next;
+    });
 
-    return () => clearInterval(interval);
-  }, [newestTimestamp, filtersActive]);
+    if (selectedEvent?.id === id) {
+      setSelectedEvent(null);
+    }
+  };
 
-  // Session events (filtered)
-  const sessionEvents = filteredEvents.filter(
-    (e) => e.sessionId === selectedSessionId
+  // Session events
+  const sessionEvents = visibleEvents.filter(
+    (e) => String(e.sessionId) === String(selectedSessionId)
   );
 
+  // ⭐ Correct modal navigation index
   const currentIndex =
     selectedEvent && sessionEvents.length > 0
-      ? sessionEvents.findIndex((e) => e.id === selectedEvent.id)
+      ? sessionEvents.findIndex((e) => String(e.id) === String(selectedEvent.id))
       : null;
 
   const handleNavigate = (dir: "prev" | "next") => {
@@ -114,8 +155,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
 
   return (
     <div className="w-full max-w-[1400px] mx-auto px-4 py-4">
-
-      {/* TITLE + REFRESH */}
+      {/* HEADER */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl lg:text-3xl font-bold text-gray-100">
           Teacher Dashboard
@@ -163,31 +203,32 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-
         {/* LEFT COLUMN */}
         <div className="flex-1 max-w-[900px] flex flex-col gap-6">
-
           <div className="lg:hidden">
             <SessionDetails
-              events={filteredEvents}
+              events={visibleEvents}
               selectedSessionId={selectedSessionId}
               onSelectSession={setSelectedSessionId}
             />
           </div>
 
-          <ChartsPanel filteredEvents={filteredEvents} />
+          <ChartsPanel filteredEvents={visibleEvents} />
 
           <div id="events-table">
             <EventsTable
-              events={filteredEvents}
+              events={visibleEvents}
               onSelectEvent={setSelectedEvent}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+              onToggleSelectAll={toggleSelectAll}
+              onArchiveSelected={handleArchiveSelected}
             />
           </div>
         </div>
 
         {/* RIGHT COLUMN */}
         <div className="w-full lg:w-80 flex-shrink-0 flex flex-col gap-4">
-
           <div className="hidden lg:block">
             <FiltersPanel
               events={baseEvents}
@@ -198,31 +239,54 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
             />
           </div>
 
-          <button
-            onClick={() =>
-              document.getElementById("events-table")?.scrollIntoView({ behavior: "smooth" })
-            }
-            className="text-blue-400 hover:text-blue-300 text-sm underline font-bold"
-          >
-            Jump to Events ↓
-          </button>
+          <div className="flex justify-center">
+            <button
+              onClick={() =>
+                document
+                  .getElementById("events-table")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
+              className="text-blue-400 hover:text-blue-300 text-sm underline font-bold inline-flex items-center gap-1"
+            >
+              Jump to Events
+              <CaretUp className="h-3 w-3 align-middle" />
+            </button>
+          </div>
+
 
           <div className="hidden lg:block">
             <SessionDetails
-              events={filteredEvents}
+              events={visibleEvents}
               selectedSessionId={selectedSessionId}
               onSelectSession={setSelectedSessionId}
+            />
+          </div>
+
+          <div className="hidden lg:block">
+            <ArchiveManager
+              archivedIds={archivedIds}
+              allEvents={baseEvents}
+              onRestore={(id) => {
+                setArchivedIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(String(id));
+                  return next;
+                });
+              }}
+              onRestoreAll={() => setArchivedIds(new Set())}
             />
           </div>
         </div>
       </div>
 
+      {/* MODAL */}
       <PromptDetailModal
         event={selectedEvent}
         sessionEvents={sessionEvents}
         currentIndex={currentIndex}
         onClose={() => setSelectedEvent(null)}
         onNavigate={handleNavigate}
+        onArchiveEvent={(id) => handleArchiveEvent(id)}
       />
     </div>
   );

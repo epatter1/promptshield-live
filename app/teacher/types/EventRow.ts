@@ -1,5 +1,5 @@
 export type EventRow = {
-  id: number | null;
+  id: string; // normalized ID
   timestamp: string;
   sessionId: string;
   input: string;

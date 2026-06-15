@@ -8,6 +8,11 @@ import {
   FILTER_BUTTON_BASE,
 } from "../../../types/theme";
 
+type FiltersPanelProps = {
+  events: EventRow[];
+  onFilterChange: (filtered: EventRow[], isFiltered: boolean) => void;
+};
+
 const RISK_LEVELS = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "SAFE"];
 
 const VALID_CATEGORIES = [
@@ -24,13 +29,7 @@ const VALID_CATEGORIES = [
   "MANIPULATION",
 ];
 
-export default function FiltersPanel({
-  events,
-  onFilterChange,
-}: {
-  events: EventRow[];
-  onFilterChange: (filtered: EventRow[], isFiltered: boolean) => void;
-}) {
+export default function FiltersPanel({ events, onFilterChange }: FiltersPanelProps) {
   const [selectedRisks, setSelectedRisks] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
@@ -41,10 +40,18 @@ export default function FiltersPanel({
           .map((e) => e.classification)
           .filter((c) => c && VALID_CATEGORIES.includes(c))
       )
-    );
+    ).sort((a, b) => {
+      if (a === "SAFE") return 1;
+      if (b === "SAFE") return -1;
+      return 0;
+    });
   }, [events]);
 
-  const toggle = (value: string, list: string[], setList: (v: string[]) => void) => {
+  const toggle = (
+    value: string,
+    list: string[],
+    setList: (v: string[]) => void
+  ) => {
     setList(
       list.includes(value)
         ? list.filter((x) => x !== value)
@@ -66,7 +73,8 @@ export default function FiltersPanel({
   }, [events, selectedRisks, selectedCategories]);
 
   useEffect(() => {
-    const isFiltered = selectedRisks.length > 0 || selectedCategories.length > 0;
+    const isFiltered =
+      selectedRisks.length > 0 || selectedCategories.length > 0;
     onFilterChange(filtered, isFiltered);
   }, [filtered]);
 
@@ -90,7 +98,6 @@ export default function FiltersPanel({
         )}
       </div>
 
-      {/* RISK FILTERS */}
       <div className="mb-3">
         <div className="text-xs text-gray-400 mb-1">Risk Level</div>
         <div className="flex flex-wrap gap-2 text-xs">
@@ -108,7 +115,6 @@ export default function FiltersPanel({
         </div>
       </div>
 
-      {/* CATEGORY FILTERS */}
       <div>
         <div className="text-xs text-gray-400 mb-1">Category</div>
         <div className="flex flex-wrap gap-2 text-xs">

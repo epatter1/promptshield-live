@@ -14,6 +14,7 @@ interface PromptDetailModalProps {
   currentIndex: number | null;
   onClose: () => void;
   onNavigate: (dir: "prev" | "next") => void;
+  onArchiveEvent: (id: string) => void;
 }
 
 export default function PromptDetailModal({
@@ -22,9 +23,9 @@ export default function PromptDetailModal({
   currentIndex,
   onClose,
   onNavigate,
+  onArchiveEvent,
 }: PromptDetailModalProps) {
   if (!event) return null;
-
   if (typeof window === "undefined") return null;
 
   const modalRoot = document.getElementById("modal-root");
@@ -39,7 +40,6 @@ export default function PromptDetailModal({
   return createPortal(
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
       <div className="bg-gray-900 border border-gray-700 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 relative">
-
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-300 hover:text-white text-xl"
@@ -49,8 +49,14 @@ export default function PromptDetailModal({
 
         <h2 className="text-lg font-semibold mb-4">Event Details</h2>
 
-        <div className="text-sm text-gray-400 mb-2">
+        <div className="text-sm text-gray-400 mb-1">
           {new Date(event.timestamp).toLocaleString()}
+        </div>
+
+        <div className="text-xs text-gray-400 mb-2">
+          {currentIndex !== null && sessionEvents
+            ? `${currentIndex + 1} of ${sessionEvents.length}`
+            : ""}
         </div>
 
         <div className="text-sm text-gray-300 mb-4">
@@ -132,6 +138,13 @@ export default function PromptDetailModal({
               }`}
             >
               ← Previous
+            </button>
+
+            <button
+              onClick={() => onArchiveEvent(String(event.id))}
+              className="px-3 py-2 rounded bg-red-700 border border-red-900 text-sm text-white hover:bg-red-600"
+            >
+              Archive Event
             </button>
 
             <button

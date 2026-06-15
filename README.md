@@ -33,7 +33,26 @@ PromptShield Live is a **real‑time AI classroom monitoring system** that provi
 
 The project demonstrates how to build a **safe, observable, classroom‑ready LLM application** with clean architecture and modern tooling.
 
+```mermaid
+flowchart TD
+    A[Phase 1: DB + API Pipeline ✓] --> B[Phase 2: Dashboard Layout ✓]
+    B --> C[Phase 3: Filtering System ✓]
+    C --> D[Phase 4: Archive System ✓]
+    D --> E[Phase 5: Modal Navigation ✓]
+    E --> F[Phase 6: ID Normalization ✓]
+    F --> G[Phase 7: UI/UX Polish 90%]
+    G --> H[Phase 8: Analytics & Insights Panel]
+    H --> I[Phase 9: Session Replay Enhancements]
+    I --> J[Phase 10: Admin Tools & Governance]
+    J --> K[Phase 11: Real-Time Monitoring]
+    K --> L[Phase 12: AI Safety Automation]
+    L --> M[Phase 13: Multi-Teacher / Multi-Class Support]
+    M --> N[Phase 14: Production Hardening & Deployment]
+```
+
 </details>
+
+
 
 ---
 

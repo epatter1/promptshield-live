@@ -1,6 +1,7 @@
 "use client";
 
 import ReactECharts from "echarts-for-react";
+import { useMemo } from "react";
 
 interface ActivityChartProps {
   activityData: { value: [number, number] }[];
@@ -15,90 +16,98 @@ export default function ActivityChart({
   yLabel,
   titleTooltip,
 }: ActivityChartProps) {
-  const option = {
-    backgroundColor: "transparent",
-    animation: false,
+  const timeUnit = "minutes"; // your data is aggregated per minute
 
-    title: {
-      text: "Session Activity Over Time",
-      left: "center",
-      textStyle: { color: "#e5e7eb", fontSize: 12 },
-      subtext: titleTooltip,
-      subtextStyle: { color: "#9ca3af", fontSize: 10 },
-      triggerEvent: true,
-    },
+  // ⭐ Memoize the option object so ECharts does NOT re-run setOption during render
+  const option = useMemo(() => {
+    return {
+      backgroundColor: "transparent",
+      animation: false,
 
-    tooltip: {
-      trigger: "axis",
-      formatter: (params: any) => {
-        const p = params[0];
-        const date = new Date(p.value[0]).toLocaleString();
-        return `
-          <div>
-            <strong>Time:</strong> ${date}<br/>
-            <strong>Events:</strong> ${p.value[1]}
-          </div>
-        `;
+      title: {
+        text: "Session Activity Over Time",
+        left: "center",
+        textStyle: { color: "#e5e7eb", fontSize: 12 },
+        subtext: titleTooltip,
+        subtextStyle: { color: "#9ca3af", fontSize: 10 },
+        triggerEvent: true,
       },
-      backgroundColor: "#1f2937",
-      borderColor: "#374151",
-      textStyle: { color: "#e5e7eb" },
-    },
 
-    grid: {
-      left: 50,
-      right: 30,
-      top: 70,
-      bottom: 60,
-      containLabel: true,
-    },
+      tooltip: {
+        trigger: "axis",
+        formatter: (params: any) => {
+          const p = params[0];
+          const date = new Date(p.value[0]).toLocaleString();
+          const count = p.value[1];
 
-    xAxis: {
-      type: "time",
-      axisLabel: { color: "#e5e7eb" },
-      splitLine: { lineStyle: { color: "rgba(255,255,255,0.1)" } },
-      name: xLabel,
-      nameLocation: "middle",
-      nameGap: 40,
-      nameTextStyle: {
-        color: "#e5e7eb",
-        fontSize: 11,
-      },
-    },
-
-    yAxis: {
-      type: "value",
-      axisLabel: { color: "#e5e7eb" },
-      splitLine: { lineStyle: { color: "rgba(255,255,255,0.1)" } },
-      name: yLabel,
-      nameLocation: "middle",
-      nameGap: 45,
-      nameTextStyle: {
-        color: "#e5e7eb",
-        fontSize: 11,
-      },
-    },
-
-    series: [
-      {
-        type: "line",
-        data: activityData,
-        smooth: true,
-        symbol: "circle",
-        symbolSize: 6,
-        itemStyle: {
-          color: "#a78bfa", // purple
+          return `
+            <div>
+              <strong>Time (${timeUnit}):</strong> ${date}<br/>
+              <strong>Events:</strong> ${count} event${count === 1 ? "" : "s"}/min
+            </div>
+          `;
         },
-        lineStyle: {
-          color: "#a78bfa",
-          width: 2,
-        },
-        areaStyle: {
-          color: "rgba(167, 139, 250, 0.15)",
+        backgroundColor: "#1f2937",
+        borderColor: "#374151",
+        textStyle: { color: "#e5e7eb" },
+      },
+
+      grid: {
+        left: 50,
+        right: 30,
+        top: 70,
+        bottom: 60,
+        containLabel: true,
+      },
+
+      xAxis: {
+        type: "time",
+        axisLabel: { color: "#e5e7eb" },
+        splitLine: { lineStyle: { color: "rgba(255,255,255,0.1)" } },
+        name: `Time (${timeUnit})`,
+        nameLocation: "middle",
+        nameGap: 40,
+        nameTextStyle: {
+          color: "#e5e7eb",
+          fontSize: 11,
         },
       },
-    ],
-  };
+
+      yAxis: {
+        type: "value",
+        axisLabel: { color: "#e5e7eb" },
+        splitLine: { lineStyle: { color: "rgba(255,255,255,0.1)" } },
+        name: yLabel,
+        nameLocation: "middle",
+        nameGap: 45,
+        nameTextStyle: {
+          color: "#e5e7eb",
+          fontSize: 11,
+        },
+      },
+
+      series: [
+        {
+          type: "line",
+          data: activityData,
+          smooth: true,
+          symbol: "circle",
+          symbolSize: 6,
+          itemStyle: {
+            color: "#a78bfa",
+          },
+          lineStyle: {
+            color: "#a78bfa",
+            width: 2,
+          },
+          areaStyle: {
+            color: "rgba(167, 139, 250, 0.15)",
+          },
+          label: { show: false },
+        },
+      ],
+    };
+  }, [activityData, yLabel, titleTooltip]);
 
   return (
     <ReactECharts

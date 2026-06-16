@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { EventRow } from "../../types/EventRow";
 import {
@@ -26,11 +26,15 @@ export default function PromptDetailModal({
   onNavigate,
   onArchiveEvent,
 }: PromptDetailModalProps) {
-  if (!event) return null;
-  if (typeof window === "undefined") return null;
+  // ⭐ Hooks ALWAYS run
+  const [mounted, setMounted] = useState(false);
+  const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null);
 
-  const modalRoot = document.getElementById("modal-root");
-  if (!modalRoot) return null;
+  // ⭐ Safe DOM access
+  useEffect(() => {
+    setMounted(true);
+    setModalRoot(document.getElementById("modal-root"));
+  }, []);
 
   const hasPrev = sessionEvents && currentIndex !== null && currentIndex > 0;
   const hasNext =
@@ -38,30 +42,32 @@ export default function PromptDetailModal({
     currentIndex !== null &&
     currentIndex < sessionEvents.length - 1;
 
-  // ⭐ Add left/right arrow navigation
+  // ⭐ Arrow key navigation (hook always runs)
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (!event) return;
+    if (!mounted) return;
 
+    const handler = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft" && hasPrev) {
         e.preventDefault();
         onNavigate("prev");
       }
-
       if (e.key === "ArrowRight" && hasNext) {
         e.preventDefault();
         onNavigate("next");
       }
-
       if (e.key === "Escape") {
         e.preventDefault();
         onClose();
       }
     };
 
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [event, hasPrev, hasNext, onNavigate, onClose]);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [mounted, hasPrev, hasNext, onNavigate, onClose]);
+
+  // ⭐ Conditional rendering happens AFTER all hooks
+  const ready = mounted && modalRoot && event;
+  if (!ready) return null;
 
   return createPortal(
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">

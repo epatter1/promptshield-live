@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { EventRow } from "../../types/EventRow";
 import {
@@ -36,6 +37,31 @@ export default function PromptDetailModal({
     sessionEvents &&
     currentIndex !== null &&
     currentIndex < sessionEvents.length - 1;
+
+  // ⭐ Add left/right arrow navigation
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (!event) return;
+
+      if (e.key === "ArrowLeft" && hasPrev) {
+        e.preventDefault();
+        onNavigate("prev");
+      }
+
+      if (e.key === "ArrowRight" && hasNext) {
+        e.preventDefault();
+        onNavigate("next");
+      }
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [event, hasPrev, hasNext, onNavigate, onClose]);
 
   return createPortal(
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">

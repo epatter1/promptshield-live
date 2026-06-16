@@ -1,8 +1,8 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { EventRow } from "../../types/EventRow";
 import { RISK_COLORS, CATEGORY_COLORS, BADGE_BASE } from "../../types/theme";
-import { useEffect, useRef } from "react";
 import { CaretUp, CaretDown } from "./icons/Carets";
 
 interface EventsTableProps {
@@ -22,15 +22,66 @@ export default function EventsTable({
   onToggleSelectAll,
   onArchiveSelected,
 }: EventsTableProps) {
-  const sorted = [...events].sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
+  // Sorting state
+  const [sortKey, setSortKey] = useState<
+    "timestamp" | "sessionId" | "input" | "risk" | "category" | "latency"
+  >("timestamp");
+
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  // Sorting logic
+  const sorted = [...events].sort((a, b) => {
+    let aVal: any;
+    let bVal: any;
+
+    switch (sortKey) {
+      case "timestamp":
+        aVal = new Date(a.timestamp).getTime();
+        bVal = new Date(b.timestamp).getTime();
+        break;
+      case "sessionId":
+        aVal = a.sessionId;
+        bVal = b.sessionId;
+        break;
+      case "input":
+        aVal = a.input;
+        bVal = b.input;
+        break;
+      case "risk":
+        aVal = a.riskLevel;
+        bVal = b.riskLevel;
+        break;
+      case "category":
+        aVal = a.classification;
+        bVal = b.classification;
+        break;
+      case "latency":
+        aVal = a.latencyMs;
+        bVal = b.latencyMs;
+        break;
+      default:
+        aVal = 0;
+        bVal = 0;
+    }
+
+    if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
+    if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
+    return 0;
+  });
 
   const allSelected = selectedIds.size === sorted.length && sorted.length > 0;
   const someSelected =
     selectedIds.size > 0 && selectedIds.size < sorted.length;
 
-  // ⭐ Indeterminate checkbox
   const selectAllRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -39,21 +90,31 @@ export default function EventsTable({
     }
   }, [someSelected]);
 
+  const renderSortCaret = (key: typeof sortKey) => {
+    if (sortKey !== key) return null;
+    return sortDir === "asc" ? (
+      <CaretUp className="h-3 w-3 inline-block ml-1" />
+    ) : (
+      <CaretDown className="h-3 w-3 inline-block ml-1" />
+    );
+  };
+
   return (
     <div className="w-full overflow-x-auto rounded-lg bg-gray-900 border border-gray-800">
-      {/* HEADER */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800">
+      {/* Sticky Header Bar */}
+      <div className="sticky top-0 z-30 bg-gray-900 border-b border-gray-800 px-4 py-2 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-100">
           All Filtered Events
         </h2>
 
         <div className="flex items-center gap-3">
-          {/* ⭐ Fade-in/out Archive Selected */}
+          {/* Archive Selected */}
           <div
-            className={`transition-opacity duration-200 ${selectedIds.size > 0
+            className={`transition-opacity duration-200 ${
+              selectedIds.size > 0
                 ? "opacity-100"
                 : "opacity-0 pointer-events-none"
-              }`}
+            }`}
           >
             <button
               onClick={onArchiveSelected}
@@ -63,7 +124,7 @@ export default function EventsTable({
             </button>
           </div>
 
-          {/* ⭐ Back to Top with caret */}
+          {/* Back to Top */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="text-blue-400 hover:text-blue-300 text-sm underline font-bold inline-flex items-center gap-1"
@@ -71,13 +132,12 @@ export default function EventsTable({
             Back to Top
             <CaretUp className="h-3 w-3 align-middle" />
           </button>
-
         </div>
       </div>
 
-      {/* TABLE */}
+      {/* Table */}
       <table className="min-w-max w-full text-xs text-gray-200">
-        <thead className="bg-gray-800">
+        <thead className="bg-gray-800 sticky top-[48px] z-20">
           <tr>
             <th className="px-4 py-2 text-left">
               <input
@@ -87,12 +147,48 @@ export default function EventsTable({
                 onChange={onToggleSelectAll}
               />
             </th>
-            <th className="px-4 py-2 text-left">Time</th>
-            <th className="px-4 py-2 text-left">Session</th>
-            <th className="px-4 py-2 text-left">Input</th>
-            <th className="px-4 py-2 text-left">Risk</th>
-            <th className="px-4 py-2 text-left">Category</th>
-            <th className="px-4 py-2 text-left">Latency</th>
+
+            <th
+              className="px-4 py-2 text-left cursor-pointer select-none"
+              onClick={() => toggleSort("timestamp")}
+            >
+              Time {renderSortCaret("timestamp")}
+            </th>
+
+            <th
+              className="px-4 py-2 text-left cursor-pointer select-none"
+              onClick={() => toggleSort("sessionId")}
+            >
+              Session {renderSortCaret("sessionId")}
+            </th>
+
+            <th
+              className="px-4 py-2 text-left cursor-pointer select-none"
+              onClick={() => toggleSort("input")}
+            >
+              Input {renderSortCaret("input")}
+            </th>
+
+            <th
+              className="px-4 py-2 text-left cursor-pointer select-none"
+              onClick={() => toggleSort("risk")}
+            >
+              Risk {renderSortCaret("risk")}
+            </th>
+
+            <th
+              className="px-4 py-2 text-left cursor-pointer select-none"
+              onClick={() => toggleSort("category")}
+            >
+              Category {renderSortCaret("category")}
+            </th>
+
+            <th
+              className="px-4 py-2 text-left cursor-pointer select-none"
+              onClick={() => toggleSort("latency")}
+            >
+              Latency {renderSortCaret("latency")}
+            </th>
           </tr>
         </thead>
 
@@ -104,12 +200,11 @@ export default function EventsTable({
             return (
               <tr
                 key={id}
-                className={`border-t border-gray-800 cursor-pointer transition-colors duration-150
-                  ${checked
+                className={`border-t border-gray-800 cursor-pointer transition-colors duration-150 ${
+                  checked
                     ? "bg-gray-800/70 hover:bg-gray-800/80"
                     : "hover:bg-gray-800"
-                  }
-                `}
+                }`}
               >
                 <td className="px-4 py-2">
                   <input
@@ -145,7 +240,9 @@ export default function EventsTable({
                   className="px-4 py-2 whitespace-nowrap"
                   onClick={() => onSelectEvent(event)}
                 >
-                  <span className={`${BADGE_BASE} ${RISK_COLORS[event.riskLevel]}`}>
+                  <span
+                    className={`${BADGE_BASE} ${RISK_COLORS[event.riskLevel]}`}
+                  >
                     {event.riskLevel}
                   </span>
                 </td>
@@ -155,9 +252,10 @@ export default function EventsTable({
                   onClick={() => onSelectEvent(event)}
                 >
                   <span
-                    className={`${BADGE_BASE} ${CATEGORY_COLORS[event.classification] ??
+                    className={`${BADGE_BASE} ${
+                      CATEGORY_COLORS[event.classification] ??
                       "bg-gray-700 text-gray-200 border border-gray-600"
-                      }`}
+                    }`}
                   >
                     {event.classification}
                   </span>

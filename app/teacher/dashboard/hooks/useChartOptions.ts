@@ -5,7 +5,7 @@ import { EventRow } from "../../types/EventRow";
 
 type ChartOptions = {
   riskCounts: Record<string, number>;
-  injectionPoints: { name: string; value: [number, number] }[];
+  injectionPoints: { timestamp: string; value: number }[];
   latencyBuckets: Record<string, number>;
   activityData: { value: [number, number] }[];
 };
@@ -20,15 +20,13 @@ export default function useChartOptions(events: EventRow[]): ChartOptions {
     return counts;
   }, [events]);
 
+  // ⭐ FIXED: InjectionChart now receives the correct shape
   const injectionPoints = useMemo(() => {
     return events
       .filter((e) => e.injectionDetected === 1)
       .map((e) => ({
-        name: e.sessionId,
-        value: [
-          new Date(e.timestamp).getTime(),
-          1,
-        ] as [number, number],
+        timestamp: e.timestamp, // ISO string
+        value: 1,               // always 1
       }));
   }, [events]);
 
@@ -62,10 +60,7 @@ export default function useChartOptions(events: EventRow[]): ChartOptions {
     }
 
     return Object.entries(map).map(([time, count]) => ({
-      value: [
-        new Date(time).getTime(),
-        count,
-      ] as [number, number],
+      value: [new Date(time).getTime(), count] as [number, number],
     }));
   }, [events]);
 

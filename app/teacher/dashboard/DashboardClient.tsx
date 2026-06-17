@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { EventRow } from "../types/EventRow";
 
 import ChartsPanel from "./components/ChartsPanel";
@@ -9,10 +9,10 @@ import SessionDetails from "./components/sessions/SessionDetails";
 import FiltersPanel from "./components/filters/FiltersPanel";
 import PromptDetailModal from "./components/PromptDetailModal";
 import ArchiveManager from "./components/archive/ArchiveManager";
-import { CaretDown, CaretUp } from "./components/icons/Carets";
+import { CaretUp } from "./components/icons/Carets";
 
 export default function DashboardClient({ events }: { events: EventRow[] }) {
-  // ⭐ Normalize IDs and generate fallback keys
+  // Normalize IDs
   const normalize = (rows: EventRow[]) =>
     rows.map((e) => ({
       ...e,
@@ -29,11 +29,27 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
 
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
-  // ⭐ Correct modal state: event + index
+  // Modal state
   const [selectedEvent, setSelectedEvent] = useState<EventRow | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const [refreshing, setRefreshing] = useState(false);
+
+  // ⭐ Sorting state moved up
+  const [sortKey, setSortKey] = useState<
+    "timestamp" | "sessionId" | "input" | "risk" | "category" | "latency"
+  >("timestamp");
+
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
 
   // Load archive
   useEffect(() => {
@@ -100,12 +116,12 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     });
   };
 
-  // ⭐ Correct Select‑All / Deselect‑All
+  // Select all / deselect all
   const toggleSelectAll = () => {
     if (selectedIds.size === visibleEvents.length) {
-      setSelectedIds(new Set()); // deselect all
+      setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(visibleEvents.map((e) => String(e.id)))); // select all
+      setSelectedIds(new Set(visibleEvents.map((e) => String(e.id))));
     }
   };
 
@@ -141,17 +157,61 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     (e) => String(e.sessionId) === String(selectedSessionId)
   );
 
-  // ⭐ Correct event selection: event + index
+  // ⭐ Apply sorting to the final table list
+  const tableEvents = useMemo(() => {
+    const sorted = [...sessionEvents].sort((a, b) => {
+      let aVal: any;
+      let bVal: any;
+
+      switch (sortKey) {
+        case "timestamp":
+          aVal = new Date(a.timestamp).getTime();
+          bVal = new Date(b.timestamp).getTime();
+          break;
+        case "sessionId":
+          aVal = a.sessionId;
+          bVal = b.sessionId;
+          break;
+        case "input":
+          aVal = a.input;
+          bVal = b.input;
+          break;
+        case "risk":
+          aVal = a.riskLevel;
+          bVal = b.riskLevel;
+          break;
+        case "category":
+          aVal = a.classification;
+          bVal = b.classification;
+          break;
+        case "latency":
+          aVal = a.latencyMs;
+          bVal = b.latencyMs;
+          break;
+        default:
+          aVal = 0;
+          bVal = 0;
+      }
+
+      if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [sessionEvents, sortKey, sortDir]);
+
+  // Select event + index
   const handleSelectEvent = (event: EventRow, index: number) => {
     setSelectedEvent(event);
     setSelectedIndex(index);
   };
 
-  // ⭐ Correct modal navigation
+  // Navigate modal
   const handleNavigate = (newIndex: number) => {
-    if (newIndex < 0 || newIndex >= sessionEvents.length) return;
+    if (newIndex < 0 || newIndex >= tableEvents.length) return;
 
-    setSelectedEvent(sessionEvents[newIndex]);
+    setSelectedEvent(tableEvents[newIndex]);
     setSelectedIndex(newIndex);
   };
 
@@ -219,12 +279,15 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
 
           <div id="events-table">
             <EventsTable
-              events={sessionEvents}
+              events={tableEvents}
               onSelectEvent={handleSelectEvent}
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
               onToggleSelectAll={toggleSelectAll}
               onArchiveSelected={handleArchiveSelected}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSortChange={toggleSort}
             />
           </div>
         </div>
@@ -285,7 +348,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
         <PromptDetailModal
           event={selectedEvent}
           index={selectedIndex}
-          total={sessionEvents.length}
+          total={tableEvents.length}
           onClose={() => {
             setSelectedEvent(null);
             setSelectedIndex(null);

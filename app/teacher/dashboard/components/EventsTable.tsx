@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { EventRow } from "../../types/EventRow";
 import { RISK_COLORS, CATEGORY_COLORS, BADGE_BASE } from "../../types/theme";
 import { CaretUp, CaretDown } from "./icons/Carets";
@@ -12,6 +12,10 @@ interface EventsTableProps {
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
   onArchiveSelected: () => void;
+
+  sortKey: "timestamp" | "sessionId" | "input" | "risk" | "category" | "latency";
+  sortDir: "asc" | "desc";
+  onSortChange: (key: "timestamp" | "sessionId" | "input" | "risk" | "category" | "latency") => void;
 }
 
 export default function EventsTable({
@@ -21,64 +25,13 @@ export default function EventsTable({
   onToggleSelect,
   onToggleSelectAll,
   onArchiveSelected,
+  sortKey,
+  sortDir,
+  onSortChange,
 }: EventsTableProps) {
-  const [sortKey, setSortKey] = useState<
-    "timestamp" | "sessionId" | "input" | "risk" | "category" | "latency"
-  >("timestamp");
-
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-
-  const toggleSort = (key: typeof sortKey) => {
-    if (sortKey === key) {
-      setSortDir(sortDir === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDir("asc");
-    }
-  };
-
-  const sorted = [...events].sort((a, b) => {
-    let aVal: any;
-    let bVal: any;
-
-    switch (sortKey) {
-      case "timestamp":
-        aVal = new Date(a.timestamp).getTime();
-        bVal = new Date(b.timestamp).getTime();
-        break;
-      case "sessionId":
-        aVal = a.sessionId;
-        bVal = b.sessionId;
-        break;
-      case "input":
-        aVal = a.input;
-        bVal = b.input;
-        break;
-      case "risk":
-        aVal = a.riskLevel;
-        bVal = b.riskLevel;
-        break;
-      case "category":
-        aVal = a.classification;
-        bVal = b.classification;
-        break;
-      case "latency":
-        aVal = a.latencyMs;
-        bVal = b.latencyMs;
-        break;
-      default:
-        aVal = 0;
-        bVal = 0;
-    }
-
-    if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
-    if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
-    return 0;
-  });
-
-  const allSelected = selectedIds.size === sorted.length && sorted.length > 0;
+  const allSelected = selectedIds.size === events.length && events.length > 0;
   const someSelected =
-    selectedIds.size > 0 && selectedIds.size < sorted.length;
+    selectedIds.size > 0 && selectedIds.size < events.length;
 
   const selectAllRef = useRef<HTMLInputElement>(null);
 
@@ -99,11 +52,9 @@ export default function EventsTable({
 
   return (
     <div className="w-full rounded-lg bg-gray-900 border border-gray-800">
-
-      {/* ⭐ Anchor for bottom Back to Top */}
       <div id="events-table-top"></div>
 
-      {/* ⭐ Sticky Header */}
+      {/* Sticky Header */}
       <div className="sticky top-0 z-20 bg-gray-900 border-b border-gray-800 px-4 py-2 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-100">
           All Filtered Events
@@ -125,11 +76,8 @@ export default function EventsTable({
             </button>
           </div>
 
-          {/* ⭐ Back to Top (scrolls page) */}
           <button
-            onClick={() =>
-              window.scrollTo({ top: 0, behavior: "smooth" })
-            }
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="text-blue-400 hover:text-blue-300 text-sm underline font-bold inline-flex items-center gap-1"
           >
             Back to Top
@@ -138,7 +86,6 @@ export default function EventsTable({
         </div>
       </div>
 
-      {/* ⭐ Table */}
       <div>
         <table className="table-fixed min-w-full w-full text-xs text-gray-200">
           <thead className="bg-gray-800 sticky top-[40px] z-10">
@@ -154,42 +101,42 @@ export default function EventsTable({
 
               <th
                 className="px-4 py-2 text-left cursor-pointer select-none w-40"
-                onClick={() => toggleSort("timestamp")}
+                onClick={() => onSortChange("timestamp")}
               >
                 Time {renderSortCaret("timestamp")}
               </th>
 
               <th
                 className="px-4 py-2 text-left cursor-pointer select-none w-32"
-                onClick={() => toggleSort("sessionId")}
+                onClick={() => onSortChange("sessionId")}
               >
                 Session {renderSortCaret("sessionId")}
               </th>
 
               <th
                 className="px-4 py-2 text-left cursor-pointer select-none"
-                onClick={() => toggleSort("input")}
+                onClick={() => onSortChange("input")}
               >
                 Input {renderSortCaret("input")}
               </th>
 
               <th
                 className="px-4 py-2 text-left cursor-pointer select-none w-24"
-                onClick={() => toggleSort("risk")}
+                onClick={() => onSortChange("risk")}
               >
                 Risk {renderSortCaret("risk")}
               </th>
 
               <th
                 className="px-4 py-2 text-left cursor-pointer select-none w-32"
-                onClick={() => toggleSort("category")}
+                onClick={() => onSortChange("category")}
               >
                 Category {renderSortCaret("category")}
               </th>
 
               <th
                 className="px-4 py-2 text-left cursor-pointer select-none w-24"
-                onClick={() => toggleSort("latency")}
+                onClick={() => onSortChange("latency")}
               >
                 Latency {renderSortCaret("latency")}
               </th>
@@ -197,7 +144,7 @@ export default function EventsTable({
           </thead>
 
           <tbody>
-            {sorted.map((event, index) => {
+            {events.map((event, index) => {
               const id = String(event.id);
               const checked = selectedIds.has(id);
 
@@ -211,7 +158,6 @@ export default function EventsTable({
                       : "hover:bg-gray-800"
                   }`}
                 >
-                  {/* Checkbox cell stops propagation */}
                   <td
                     className="px-4 py-2 w-8"
                     onClick={(e) => e.stopPropagation()}
@@ -266,7 +212,6 @@ export default function EventsTable({
           </tbody>
         </table>
 
-        {/* ⭐ Bottom Back to Top */}
         <div className="px-4 py-3 border-t border-gray-800 bg-gray-900 flex justify-end">
           <button
             onClick={() => {

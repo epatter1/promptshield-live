@@ -26,11 +26,9 @@ export default function PromptDetailModal({
   onNavigate,
   onArchiveEvent,
 }: PromptDetailModalProps) {
-  // ⭐ Hooks ALWAYS run
   const [mounted, setMounted] = useState(false);
   const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null);
 
-  // ⭐ Safe DOM access
   useEffect(() => {
     setMounted(true);
     setModalRoot(document.getElementById("modal-root"));
@@ -39,7 +37,6 @@ export default function PromptDetailModal({
   const hasPrev = index !== null && index > 0;
   const hasNext = index !== null && index < total - 1;
 
-  // ⭐ Arrow key navigation (index-based)
   useEffect(() => {
     if (!mounted) return;
 
@@ -62,7 +59,6 @@ export default function PromptDetailModal({
     return () => window.removeEventListener("keydown", handler);
   }, [mounted, hasPrev, hasNext, index, onNavigate, onClose]);
 
-  // ⭐ Conditional rendering happens AFTER all hooks
   const ready = mounted && modalRoot && event;
   if (!ready) return null;
 
@@ -155,17 +151,10 @@ export default function PromptDetailModal({
           </div>
         </div>
 
+        {/* ⭐ UPDATED FOOTER — Archive left, Previous left of Next */}
         <div className="flex items-center justify-between mt-6">
-          <button
-            disabled={!hasPrev}
-            onClick={() => onNavigate(index! - 1)}
-            className={`px-3 py-2 rounded bg-gray-700 border border-gray-600 text-sm ${
-              hasPrev ? "hover:bg-gray-600" : "opacity-40 cursor-not-allowed"
-            }`}
-          >
-            ← Previous
-          </button>
 
+          {/* Archive Event — far left */}
           <button
             onClick={() => onArchiveEvent(String(event.id))}
             className="px-3 py-2 rounded bg-red-700 border border-red-900 text-sm text-white hover:bg-red-600"
@@ -173,15 +162,32 @@ export default function PromptDetailModal({
             Archive Event
           </button>
 
-          <button
-            disabled={!hasNext}
-            onClick={() => onNavigate(index! + 1)}
-            className={`px-3 py-2 rounded bg-gray-700 border border-gray-600 text-sm ${
-              hasNext ? "hover:bg-gray-600" : "opacity-40 cursor-not-allowed"
-            }`}
-          >
-            Next →
-          </button>
+          {/* Navigation — Previous then Next */}
+          <div className="flex items-center gap-3">
+
+            {/* ← Previous */}
+            <button
+              disabled={!hasPrev}
+              onClick={() => onNavigate(index! - 1)}
+              className={`px-3 py-2 rounded bg-gray-700 border border-gray-600 text-sm ${
+                hasPrev ? "hover:bg-gray-600" : "opacity-40 cursor-not-allowed"
+              }`}
+            >
+              ← Previous
+            </button>
+
+            {/* Next → */}
+            <button
+              disabled={!hasNext}
+              onClick={() => onNavigate(index! + 1)}
+              className={`px-3 py-2 rounded bg-gray-700 border border-gray-600 text-sm ${
+                hasNext ? "hover:bg-gray-600" : "opacity-40 cursor-not-allowed"
+              }`}
+            >
+              Next →
+            </button>
+
+          </div>
         </div>
       </div>
     </div>,

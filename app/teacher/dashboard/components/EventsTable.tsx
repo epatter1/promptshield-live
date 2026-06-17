@@ -43,11 +43,15 @@ export default function EventsTable({
 
   const selectAllRef = useRef<HTMLInputElement>(null);
 
+  // ⭐ Reliable indeterminate fix
   useEffect(() => {
-    if (selectAllRef.current) {
-      selectAllRef.current.indeterminate = someSelected;
-    }
-  }, [someSelected]);
+    if (!selectAllRef.current) return;
+
+    const isIndeterminate =
+      selectedIds.size > 0 && selectedIds.size < events.length;
+
+    selectAllRef.current.indeterminate = isIndeterminate;
+  }, [selectedIds.size, events.length]);
 
   const renderSortCaret = (key: typeof sortKey) => {
     if (sortKey !== key) return null;
@@ -88,11 +92,10 @@ export default function EventsTable({
 
           {/* ⭐ Archive Selected */}
           <div
-            className={`transition-opacity duration-200 ${
-              selectedIds.size > 0
+            className={`transition-opacity duration-200 ${selectedIds.size > 0
                 ? "opacity-100"
                 : "opacity-0 pointer-events-none"
-            }`}
+              }`}
           >
             <button
               onClick={onArchiveSelected}
@@ -102,7 +105,7 @@ export default function EventsTable({
             </button>
           </div>
 
-          {/* ⭐ Restored Back to Top (desktop/tablet only) */}
+          {/* ⭐ Desktop-only Back to Top */}
           <button
             onClick={() => {
               window.scrollTo({ top: 0, behavior: "smooth" });
@@ -179,10 +182,9 @@ export default function EventsTable({
 
               <div className="flex justify-between items-center mt-2">
                 <span
-                  className={`${BADGE_BASE} ${
-                    CATEGORY_COLORS[event.classification] ??
+                  className={`${BADGE_BASE} ${CATEGORY_COLORS[event.classification] ??
                     "bg-gray-700 text-gray-200 border border-gray-600"
-                  }`}
+                    }`}
                 >
                   {event.classification}
                 </span>
@@ -263,11 +265,10 @@ export default function EventsTable({
                 <tr
                   key={id}
                   onClick={() => onSelectEvent(event, index)}
-                  className={`border-t border-gray-800 cursor-pointer transition-colors duration-150 ${
-                    checked
+                  className={`border-t border-gray-800 cursor-pointer transition-colors duration-150 ${checked
                       ? "bg-gray-800/70 hover:bg-gray-800/80"
                       : "hover:bg-gray-800"
-                  }`}
+                    }`}
                 >
                   <td
                     className="px-4 py-2 w-8"
@@ -305,10 +306,9 @@ export default function EventsTable({
 
                   <td className="px-4 py-2 whitespace-nowrap max-w-0 overflow-hidden w-32">
                     <span
-                      className={`${BADGE_BASE} ${
-                        CATEGORY_COLORS[event.classification] ??
+                      className={`${BADGE_BASE} ${CATEGORY_COLORS[event.classification] ??
                         "bg-gray-700 text-gray-200 border border-gray-600"
-                      }`}
+                        }`}
                     >
                       {event.classification}
                     </span>

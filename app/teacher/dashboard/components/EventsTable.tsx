@@ -78,13 +78,15 @@ export default function EventsTable({
     <div className="w-full rounded-lg bg-gray-900 border border-gray-800">
       <div id="events-table-top"></div>
 
-      {/* Sticky Header */}
+      {/* ⭐ Sticky Header */}
       <div className="sticky top-0 z-20 bg-gray-900 border-b border-gray-800 px-4 py-2 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-100">
           All Filtered Events
         </h2>
 
         <div className="flex items-center gap-4">
+
+          {/* ⭐ Archive Selected */}
           <div
             className={`transition-opacity duration-200 ${
               selectedIds.size > 0
@@ -99,6 +101,17 @@ export default function EventsTable({
               Archive Selected ({selectedIds.size})
             </button>
           </div>
+
+          {/* ⭐ Restored Back to Top (desktop/tablet only) */}
+          <button
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="hidden md:inline-flex text-blue-400 hover:text-blue-300 text-sm underline font-bold items-center gap-1"
+          >
+            Back to Top
+            <CaretUp className="h-3 w-3" />
+          </button>
         </div>
       </div>
 
@@ -118,7 +131,7 @@ export default function EventsTable({
         </select>
       </div>
 
-      {/* MOBILE CARDS */}
+      {/* ⭐ MOBILE CARDS */}
       <div className="md:hidden divide-y divide-gray-800">
         {events.map((event, index) => {
           const id = String(event.id);
@@ -138,7 +151,7 @@ export default function EventsTable({
               onTouchEnd={handleTouchEnd}
               className="p-4 cursor-pointer hover:bg-gray-800/60 transition-colors relative"
             >
-              {/* ⭐ Checkbox moved to top-right */}
+              {/* ⭐ Checkbox top-right */}
               {mobileSelectMode && (
                 <input
                   type="checkbox"
@@ -183,7 +196,7 @@ export default function EventsTable({
         })}
       </div>
 
-      {/* DESKTOP/TABLET TABLE */}
+      {/* ⭐ DESKTOP/TABLET TABLE */}
       <div className="hidden md:block">
         <table className="table-fixed min-w-full w-full text-xs text-gray-200">
           <thead className="bg-gray-800 sticky top-[40px] z-10">
@@ -311,7 +324,7 @@ export default function EventsTable({
         </table>
       </div>
 
-      {/* Bottom Back to Top */}
+      {/* ⭐ Bottom Back to Top */}
       <div className="px-4 py-3 border-t border-gray-800 bg-gray-900 flex justify-end">
         <button
           onClick={() => {

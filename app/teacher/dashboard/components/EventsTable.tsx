@@ -7,7 +7,7 @@ import { CaretUp, CaretDown } from "./icons/Carets";
 
 interface EventsTableProps {
   events: EventRow[];
-  onSelectEvent: (event: EventRow) => void;
+  onSelectEvent: (event: EventRow, index: number) => void;
   selectedIds: Set<string>;
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
@@ -44,7 +44,7 @@ export default function EventsTable({
     switch (sortKey) {
       case "timestamp":
         aVal = new Date(a.timestamp).getTime();
-        bVal = new Date(b.timestamp).getTime(); // ⭐ FIXED
+        bVal = new Date(b.timestamp).getTime();
         break;
       case "sessionId":
         aVal = a.sessionId;
@@ -197,14 +197,14 @@ export default function EventsTable({
           </thead>
 
           <tbody>
-            {sorted.map((event) => {
+            {sorted.map((event, index) => {
               const id = String(event.id);
               const checked = selectedIds.has(id);
 
               return (
                 <tr
                   key={id}
-                  onClick={() => onSelectEvent(event)}
+                  onClick={() => onSelectEvent(event, index)}
                   className={`border-t border-gray-800 cursor-pointer transition-colors duration-150 ${
                     checked
                       ? "bg-gray-800/70 hover:bg-gray-800/80"
@@ -266,7 +266,7 @@ export default function EventsTable({
           </tbody>
         </table>
 
-        {/* ⭐ Bottom Back to Top (scrolls to top of table) */}
+        {/* ⭐ Bottom Back to Top */}
         <div className="px-4 py-3 border-t border-gray-800 bg-gray-900 flex justify-end">
           <button
             onClick={() => {

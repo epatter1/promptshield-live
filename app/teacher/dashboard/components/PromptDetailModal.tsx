@@ -11,17 +11,17 @@ import {
 
 interface PromptDetailModalProps {
   event: EventRow | null;
-  sessionEvents: EventRow[] | null;
-  currentIndex: number | null;
+  index: number | null;
+  total: number;
   onClose: () => void;
-  onNavigate: (dir: "prev" | "next") => void;
+  onNavigate: (newIndex: number) => void;
   onArchiveEvent: (id: string) => void;
 }
 
 export default function PromptDetailModal({
   event,
-  sessionEvents,
-  currentIndex,
+  index,
+  total,
   onClose,
   onNavigate,
   onArchiveEvent,
@@ -36,24 +36,21 @@ export default function PromptDetailModal({
     setModalRoot(document.getElementById("modal-root"));
   }, []);
 
-  const hasPrev = sessionEvents && currentIndex !== null && currentIndex > 0;
-  const hasNext =
-    sessionEvents &&
-    currentIndex !== null &&
-    currentIndex < sessionEvents.length - 1;
+  const hasPrev = index !== null && index > 0;
+  const hasNext = index !== null && index < total - 1;
 
-  // ⭐ Arrow key navigation (hook always runs)
+  // ⭐ Arrow key navigation (index-based)
   useEffect(() => {
     if (!mounted) return;
 
     const handler = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft" && hasPrev) {
         e.preventDefault();
-        onNavigate("prev");
+        onNavigate(index! - 1);
       }
       if (e.key === "ArrowRight" && hasNext) {
         e.preventDefault();
-        onNavigate("next");
+        onNavigate(index! + 1);
       }
       if (e.key === "Escape") {
         e.preventDefault();
@@ -63,7 +60,7 @@ export default function PromptDetailModal({
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [mounted, hasPrev, hasNext, onNavigate, onClose]);
+  }, [mounted, hasPrev, hasNext, index, onNavigate, onClose]);
 
   // ⭐ Conditional rendering happens AFTER all hooks
   const ready = mounted && modalRoot && event;
@@ -86,9 +83,7 @@ export default function PromptDetailModal({
         </div>
 
         <div className="text-xs text-gray-400 mb-2">
-          {currentIndex !== null && sessionEvents
-            ? `${currentIndex + 1} of ${sessionEvents.length}`
-            : ""}
+          {index !== null ? `${index + 1} of ${total}` : ""}
         </div>
 
         <div className="text-sm text-gray-300 mb-4">
@@ -160,36 +155,34 @@ export default function PromptDetailModal({
           </div>
         </div>
 
-        {sessionEvents && (
-          <div className="flex items-center justify-between mt-6">
-            <button
-              disabled={!hasPrev}
-              onClick={() => onNavigate("prev")}
-              className={`px-3 py-2 rounded bg-gray-700 border border-gray-600 text-sm ${
-                hasPrev ? "hover:bg-gray-600" : "opacity-40 cursor-not-allowed"
-              }`}
-            >
-              ← Previous
-            </button>
+        <div className="flex items-center justify-between mt-6">
+          <button
+            disabled={!hasPrev}
+            onClick={() => onNavigate(index! - 1)}
+            className={`px-3 py-2 rounded bg-gray-700 border border-gray-600 text-sm ${
+              hasPrev ? "hover:bg-gray-600" : "opacity-40 cursor-not-allowed"
+            }`}
+          >
+            ← Previous
+          </button>
 
-            <button
-              onClick={() => onArchiveEvent(String(event.id))}
-              className="px-3 py-2 rounded bg-red-700 border border-red-900 text-sm text-white hover:bg-red-600"
-            >
-              Archive Event
-            </button>
+          <button
+            onClick={() => onArchiveEvent(String(event.id))}
+            className="px-3 py-2 rounded bg-red-700 border border-red-900 text-sm text-white hover:bg-red-600"
+          >
+            Archive Event
+          </button>
 
-            <button
-              disabled={!hasNext}
-              onClick={() => onNavigate("next")}
-              className={`px-3 py-2 rounded bg-gray-700 border border-gray-600 text-sm ${
-                hasNext ? "hover:bg-gray-600" : "opacity-40 cursor-not-allowed"
-              }`}
-            >
-              Next →
-            </button>
-          </div>
-        )}
+          <button
+            disabled={!hasNext}
+            onClick={() => onNavigate(index! + 1)}
+            className={`px-3 py-2 rounded bg-gray-700 border border-gray-600 text-sm ${
+              hasNext ? "hover:bg-gray-600" : "opacity-40 cursor-not-allowed"
+            }`}
+          >
+            Next →
+          </button>
+        </div>
       </div>
     </div>,
     modalRoot

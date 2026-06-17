@@ -28,7 +28,11 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+
+  // ⭐ Correct modal state: event + index
   const [selectedEvent, setSelectedEvent] = useState<EventRow | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
   const [refreshing, setRefreshing] = useState(false);
 
   // Load archive
@@ -39,7 +43,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
       try {
         const parsed = JSON.parse(stored) as string[];
         setArchivedIds(new Set(parsed));
-      } catch { }
+      } catch {}
     }
   }, []);
 
@@ -128,6 +132,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
 
     if (selectedEvent?.id === id) {
       setSelectedEvent(null);
+      setSelectedIndex(null);
     }
   };
 
@@ -136,21 +141,18 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     (e) => String(e.sessionId) === String(selectedSessionId)
   );
 
-  // ⭐ Correct modal navigation index
-  const currentIndex =
-    selectedEvent && sessionEvents.length > 0
-      ? sessionEvents.findIndex((e) => String(e.id) === String(selectedEvent.id))
-      : null;
+  // ⭐ Correct event selection: event + index
+  const handleSelectEvent = (event: EventRow, index: number) => {
+    setSelectedEvent(event);
+    setSelectedIndex(index);
+  };
 
-  const handleNavigate = (dir: "prev" | "next") => {
-    if (currentIndex === null) return;
+  // ⭐ Correct modal navigation
+  const handleNavigate = (newIndex: number) => {
+    if (newIndex < 0 || newIndex >= sessionEvents.length) return;
 
-    const nextIndex =
-      dir === "next"
-        ? Math.min(currentIndex + 1, sessionEvents.length - 1)
-        : Math.max(currentIndex - 1, 0);
-
-    setSelectedEvent(sessionEvents[nextIndex]);
+    setSelectedEvent(sessionEvents[newIndex]);
+    setSelectedIndex(newIndex);
   };
 
   return (
@@ -217,8 +219,8 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
 
           <div id="events-table">
             <EventsTable
-              events={visibleEvents}
-              onSelectEvent={setSelectedEvent}
+              events={sessionEvents}
+              onSelectEvent={handleSelectEvent}
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
               onToggleSelectAll={toggleSelectAll}
@@ -253,7 +255,6 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
             </button>
           </div>
 
-
           <div className="hidden lg:block">
             <SessionDetails
               events={visibleEvents}
@@ -280,14 +281,19 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
       </div>
 
       {/* MODAL */}
-      <PromptDetailModal
-        event={selectedEvent}
-        sessionEvents={sessionEvents}
-        currentIndex={currentIndex}
-        onClose={() => setSelectedEvent(null)}
-        onNavigate={handleNavigate}
-        onArchiveEvent={(id) => handleArchiveEvent(id)}
-      />
+      {selectedEvent !== null && selectedIndex !== null && (
+        <PromptDetailModal
+          event={selectedEvent}
+          index={selectedIndex}
+          total={sessionEvents.length}
+          onClose={() => {
+            setSelectedEvent(null);
+            setSelectedIndex(null);
+          }}
+          onNavigate={handleNavigate}
+          onArchiveEvent={handleArchiveEvent}
+        />
+      )}
     </div>
   );
 }

@@ -8,6 +8,9 @@ interface ArchiveManagerProps {
   allEvents: EventRow[];
   onRestore: (id: string) => void;
   onRestoreAll: () => void;
+
+  longPressEnabled: boolean;
+  setLongPressEnabled: (v: boolean) => void;
 }
 
 export default function ArchiveManager({
@@ -15,78 +18,93 @@ export default function ArchiveManager({
   allEvents,
   onRestore,
   onRestoreAll,
+  longPressEnabled,
+  setLongPressEnabled,
 }: ArchiveManagerProps) {
   const archivedEvents = allEvents.filter((e) =>
     archivedIds.has(String(e.id))
   );
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-4">
-      <h2 className="text-sm font-semibold text-gray-100 mb-3">
-        Archived Events ({archivedEvents.length})
+    <div className="w-full rounded-lg bg-gray-900 border border-gray-800 p-4">
+      <h2 className="text-lg font-semibold text-gray-100 mb-3">
+        Archive Manager
       </h2>
 
-      {archivedEvents.length === 0 && (
-        <div className="text-xs text-gray-400 italic">
-          No archived events
-        </div>
-      )}
-
-      {archivedEvents.length > 0 && (
-        <button
-          onClick={onRestoreAll}
-          className="mb-3 px-3 py-1 text-xs bg-blue-700 hover:bg-blue-600 text-white rounded border border-blue-900 font-bold"
-        >
-          Restore All
-        </button>
-      )}
-
-      <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-        {archivedEvents.map((event) => (
-          <div
-            key={event.id}
-            className="p-3 bg-gray-800 border border-gray-700 rounded-lg text-xs text-gray-300"
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-semibold text-gray-200">
-                {new Date(event.timestamp).toLocaleString()}
-              </span>
-
-              <button
-                onClick={() => onRestore(String(event.id))}
-                className="text-blue-400 hover:text-blue-300 underline font-bold"
-              >
-                Restore
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`${BADGE_BASE} ${RISK_COLORS[event.riskLevel]}`}>
-                {event.riskLevel}
-              </span>
-
-              <span
-                className={`${BADGE_BASE} ${
-                  CATEGORY_COLORS[event.classification] ??
-                  "bg-gray-700 text-gray-200 border border-gray-600"
-                }`}
-              >
-                {event.classification}
-              </span>
-            </div>
-
-            <div className="truncate text-gray-400 mb-1">
-              <strong className="text-gray-300">Session:</strong>{" "}
-              {event.sessionId}
-            </div>
-
-            <div className="truncate text-gray-400">
-              <strong className="text-gray-300">Input:</strong>{" "}
-              {event.input}
-            </div>
-          </div>
-        ))}
+      {/* ⭐ Long‑press toggle */}
+      <div className="flex items-center gap-2 mb-4">
+        <input
+          type="checkbox"
+          checked={longPressEnabled}
+          onChange={(e) => setLongPressEnabled(e.target.checked)}
+          className="h-4 w-4"
+        />
+        <span className="text-xs text-gray-300">
+          Enable long‑press multi‑select on mobile
+        </span>
       </div>
+
+      {archivedEvents.length === 0 ? (
+        <p className="text-sm text-gray-400">No archived events.</p>
+      ) : (
+        <>
+          <div className="flex justify-between items-center mb-3">
+            <p className="text-sm text-gray-300">
+              Archived: {archivedEvents.length}
+            </p>
+
+            <button
+              onClick={onRestoreAll}
+              className="text-xs text-blue-400 hover:text-blue-300 underline font-semibold"
+            >
+              Restore All
+            </button>
+          </div>
+
+          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+            {archivedEvents.map((event) => (
+              <div
+                key={event.id}
+                className="p-3 rounded bg-gray-800 border border-gray-700"
+              >
+                <div className="flex justify-between items-start mb-1">
+                  <span className="text-xs text-gray-400">
+                    {new Date(event.timestamp).toLocaleString()}
+                  </span>
+
+                  <span
+                    className={`${BADGE_BASE} ${RISK_COLORS[event.riskLevel]}`}
+                  >
+                    {event.riskLevel}
+                  </span>
+                </div>
+
+                <div className="text-sm text-gray-100 truncate mb-1">
+                  {event.input}
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span
+                    className={`${BADGE_BASE} ${
+                      CATEGORY_COLORS[event.classification] ??
+                      "bg-gray-700 text-gray-200 border border-gray-600"
+                    }`}
+                  >
+                    {event.classification}
+                  </span>
+
+                  <button
+                    onClick={() => onRestore(String(event.id))}
+                    className="text-xs text-blue-400 hover:text-blue-300 underline font-semibold"
+                  >
+                    Restore
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

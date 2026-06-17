@@ -16,6 +16,11 @@ interface EventsTableProps {
   sortKey: "timestamp" | "sessionId" | "input" | "risk" | "category" | "latency";
   sortDir: "asc" | "desc";
   onSortChange: (key: EventsTableProps["sortKey"]) => void;
+
+  mobileSelectMode: boolean;
+  setMobileSelectMode: (v: boolean) => void;
+
+  longPressEnabled: boolean;
 }
 
 export default function EventsTable({
@@ -28,6 +33,9 @@ export default function EventsTable({
   sortKey,
   sortDir,
   onSortChange,
+  mobileSelectMode,
+  setMobileSelectMode,
+  longPressEnabled,
 }: EventsTableProps) {
   const allSelected = selectedIds.size === events.length && events.length > 0;
   const someSelected =
@@ -48,6 +56,22 @@ export default function EventsTable({
     ) : (
       <CaretDown className="h-3 w-3 inline-block ml-1" />
     );
+  };
+
+  // ⭐ Long‑press detection (respects toggle)
+  let pressTimer: any;
+
+  const handleTouchStart = (event: EventRow) => {
+    if (!longPressEnabled) return;
+
+    pressTimer = setTimeout(() => {
+      setMobileSelectMode(true);
+      onToggleSelect(String(event.id));
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    clearTimeout(pressTimer);
   };
 
   return (
@@ -98,14 +122,33 @@ export default function EventsTable({
       <div className="md:hidden divide-y divide-gray-800">
         {events.map((event, index) => {
           const id = String(event.id);
+          const checked = selectedIds.has(id);
 
           return (
             <div
               key={id}
-              onClick={() => onSelectEvent(event, index)}
-              className="p-4 cursor-pointer hover:bg-gray-800/60 transition-colors"
+              onClick={() => {
+                if (mobileSelectMode) {
+                  onToggleSelect(id);
+                } else {
+                  onSelectEvent(event, index);
+                }
+              }}
+              onTouchStart={() => handleTouchStart(event)}
+              onTouchEnd={handleTouchEnd}
+              className="p-4 cursor-pointer hover:bg-gray-800/60 transition-colors relative"
             >
-              <div className="flex justify-between items-start mb-2">
+              {/* ⭐ Checkbox moved to top-right */}
+              {mobileSelectMode && (
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => onToggleSelect(id)}
+                  className="absolute top-3 right-3 h-5 w-5 z-10"
+                />
+              )}
+
+              <div className="flex justify-between items-start mb-2 pr-8">
                 <div className="text-xs text-gray-400">
                   {new Date(event.timestamp).toLocaleString()}
                 </div>

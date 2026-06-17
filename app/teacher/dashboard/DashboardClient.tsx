@@ -35,7 +35,26 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  // Sorting state
+  // ⭐ Mobile selection mode
+  const [mobileSelectMode, setMobileSelectMode] = useState(false);
+
+  // ⭐ NEW: Long‑press toggle
+  const [longPressEnabled, setLongPressEnabled] = useState(true);
+
+  // Load long‑press preference
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem("longPressEnabled");
+    if (stored !== null) setLongPressEnabled(stored === "true");
+  }, []);
+
+  // Persist long‑press preference
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("longPressEnabled", String(longPressEnabled));
+  }, [longPressEnabled]);
+
+  // Sorting
   const [sortKey, setSortKey] = useState<
     "timestamp" | "sessionId" | "input" | "risk" | "category" | "latency"
   >("timestamp");
@@ -106,7 +125,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     }
   }, [visibleEvents, selectedSessionId]);
 
-  // Individual selection
+  // Selection logic
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -116,7 +135,6 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     });
   };
 
-  // Select all / deselect all
   const toggleSelectAll = () => {
     if (selectedIds.size === visibleEvents.length) {
       setSelectedIds(new Set());
@@ -125,7 +143,6 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     }
   };
 
-  // Archive selected
   const handleArchiveSelected = () => {
     if (selectedIds.size === 0) return;
 
@@ -138,7 +155,6 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     setSelectedIds(new Set());
   };
 
-  // Archive single event
   const handleArchiveEvent = (id: string) => {
     setArchivedIds((prev) => {
       const next = new Set(prev);
@@ -157,7 +173,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     (e) => String(e.sessionId) === String(selectedSessionId)
   );
 
-  // Apply sorting to the final table list
+  // Sorting
   const tableEvents = useMemo(() => {
     const sorted = [...sessionEvents].sort((a, b) => {
       let aVal: any;
@@ -201,13 +217,14 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     return sorted;
   }, [sessionEvents, sortKey, sortDir]);
 
-  // Select event + index
+  // Select event (modal)
   const handleSelectEvent = (event: EventRow, index: number) => {
+    if (mobileSelectMode) return; // Don't open modal in selection mode
     setSelectedEvent(event);
     setSelectedIndex(index);
   };
 
-  // Navigate modal
+  // Modal navigation
   const handleNavigate = (newIndex: number) => {
     if (newIndex < 0 || newIndex >= tableEvents.length) return;
 
@@ -288,6 +305,9 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
               sortKey={sortKey}
               sortDir={sortDir}
               onSortChange={toggleSort}
+              mobileSelectMode={mobileSelectMode}
+              setMobileSelectMode={setMobileSelectMode}
+              longPressEnabled={longPressEnabled}
             />
           </div>
         </div>
@@ -327,8 +347,8 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
             />
           </div>
 
-          {/* ARCHIVE PANEL — NOW VISIBLE ON MOBILE */}
-          <div className="block lg:block">
+          {/* ⭐ ARCHIVE PANEL — padded on mobile */}
+          <div className="block lg:block pb-16 md:pb-0">
             <ArchiveManager
               archivedIds={archivedIds}
               allEvents={baseEvents}
@@ -340,10 +360,37 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
                 });
               }}
               onRestoreAll={() => setArchivedIds(new Set())}
+              longPressEnabled={longPressEnabled}
+              setLongPressEnabled={setLongPressEnabled}
             />
           </div>
         </div>
       </div>
+
+      {/* ⭐ MOBILE SELECTION MODE ACTION BAR */}
+      {mobileSelectMode && (
+        <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 p-4 pb-16 flex justify-between items-center md:hidden z-50">
+          <button
+            onClick={() => {
+              setMobileSelectMode(false);
+              setSelectedIds(new Set());
+            }}
+            className="text-gray-300 font-semibold"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={() => {
+              handleArchiveSelected();
+              setMobileSelectMode(false);
+            }}
+            className="px-4 py-2 bg-red-700 text-white rounded font-bold"
+          >
+            Archive Selected ({selectedIds.size})
+          </button>
+        </div>
+      )}
 
       {/* MODAL */}
       {selectedEvent !== null && selectedIndex !== null && (

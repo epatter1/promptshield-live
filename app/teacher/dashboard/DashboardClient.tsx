@@ -35,7 +35,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  // ⭐ Sorting state moved up
+  // Sorting state
   const [sortKey, setSortKey] = useState<
     "timestamp" | "sessionId" | "input" | "risk" | "category" | "latency"
   >("timestamp");
@@ -157,7 +157,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
     (e) => String(e.sessionId) === String(selectedSessionId)
   );
 
-  // ⭐ Apply sorting to the final table list
+  // Apply sorting to the final table list
   const tableEvents = useMemo(() => {
     const sorted = [...sessionEvents].sort((a, b) => {
       let aVal: any;
@@ -304,7 +304,8 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
             />
           </div>
 
-          <div className="flex justify-center">
+          {/* DESKTOP ONLY — Jump to Events */}
+          <div className="hidden lg:flex justify-center">
             <button
               onClick={() =>
                 document
@@ -326,7 +327,8 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
             />
           </div>
 
-          <div className="hidden lg:block">
+          {/* ARCHIVE PANEL — NOW VISIBLE ON MOBILE */}
+          <div className="block lg:block">
             <ArchiveManager
               archivedIds={archivedIds}
               allEvents={baseEvents}

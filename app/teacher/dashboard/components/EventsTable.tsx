@@ -15,7 +15,7 @@ interface EventsTableProps {
 
   sortKey: "timestamp" | "sessionId" | "input" | "risk" | "category" | "latency";
   sortDir: "asc" | "desc";
-  onSortChange: (key: "timestamp" | "sessionId" | "input" | "risk" | "category" | "latency") => void;
+  onSortChange: (key: EventsTableProps["sortKey"]) => void;
 }
 
 export default function EventsTable({
@@ -75,18 +75,73 @@ export default function EventsTable({
               Archive Selected ({selectedIds.size})
             </button>
           </div>
-
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="text-blue-400 hover:text-blue-300 text-sm underline font-bold inline-flex items-center gap-1"
-          >
-            Back to Top
-            <CaretUp className="h-3 w-3 align-middle" />
-          </button>
         </div>
       </div>
 
-      <div>
+      {/* MOBILE SORT DROPDOWN */}
+      <div className="md:hidden px-4 py-2 border-b border-gray-800 bg-gray-900">
+        <label className="text-xs text-gray-400 mr-2">Sort by:</label>
+        <select
+          value={sortKey}
+          onChange={(e) => onSortChange(e.target.value as any)}
+          className="bg-gray-800 text-gray-100 text-xs px-2 py-1 rounded border border-gray-700"
+        >
+          <option value="timestamp">Time</option>
+          <option value="risk">Risk</option>
+          <option value="category">Category</option>
+          <option value="latency">Latency</option>
+          <option value="input">Input</option>
+        </select>
+      </div>
+
+      {/* MOBILE CARDS */}
+      <div className="md:hidden divide-y divide-gray-800">
+        {events.map((event, index) => {
+          const id = String(event.id);
+
+          return (
+            <div
+              key={id}
+              onClick={() => onSelectEvent(event, index)}
+              className="p-4 cursor-pointer hover:bg-gray-800/60 transition-colors"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div className="text-xs text-gray-400">
+                  {new Date(event.timestamp).toLocaleString()}
+                </div>
+
+                <div
+                  className={`${BADGE_BASE} ${RISK_COLORS[event.riskLevel]}`}
+                >
+                  {event.riskLevel}
+                </div>
+              </div>
+
+              <div className="text-sm font-medium text-gray-100 mb-1 truncate">
+                {event.input}
+              </div>
+
+              <div className="flex justify-between items-center mt-2">
+                <span
+                  className={`${BADGE_BASE} ${
+                    CATEGORY_COLORS[event.classification] ??
+                    "bg-gray-700 text-gray-200 border border-gray-600"
+                  }`}
+                >
+                  {event.classification}
+                </span>
+
+                <span className="text-xs text-gray-400">
+                  {event.latencyMs} ms
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* DESKTOP/TABLET TABLE */}
+      <div className="hidden md:block">
         <table className="table-fixed min-w-full w-full text-xs text-gray-200">
           <thead className="bg-gray-800 sticky top-[40px] z-10">
             <tr>
@@ -211,19 +266,20 @@ export default function EventsTable({
             })}
           </tbody>
         </table>
+      </div>
 
-        <div className="px-4 py-3 border-t border-gray-800 bg-gray-900 flex justify-end">
-          <button
-            onClick={() => {
-              const tableTop = document.querySelector("#events-table-top");
-              tableTop?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="text-blue-400 hover:text-blue-300 text-sm underline font-bold inline-flex items-center gap-1"
-          >
-            Back to Top
-            <CaretUp className="h-3 w-3 align-middle" />
-          </button>
-        </div>
+      {/* Bottom Back to Top */}
+      <div className="px-4 py-3 border-t border-gray-800 bg-gray-900 flex justify-end">
+        <button
+          onClick={() => {
+            const tableTop = document.querySelector("#events-table-top");
+            tableTop?.scrollIntoView({ behavior: "smooth" });
+          }}
+          className="text-blue-400 hover:text-blue-300 text-sm underline font-bold inline-flex items-center gap-1"
+        >
+          Back to Top
+          <CaretUp className="h-3 w-3 align-middle" />
+        </button>
       </div>
     </div>
   );

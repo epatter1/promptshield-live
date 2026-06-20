@@ -1,17 +1,25 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { EventRow } from "../types/EventRow";
 
-import ChartsPanel from "./components/ChartsPanel";
+import ChartsPanel from "./components/charts/events/ChartsPanel";
 import EventsTable from "./components/EventsTable";
 import SessionDetails from "./components/sessions/SessionDetails";
 import FiltersPanel from "./components/filters/FiltersPanel";
 import PromptDetailModal from "./components/PromptDetailModal";
 import ArchiveManager from "./components/archive/ArchiveManager";
 import { CaretUp } from "./components/icons/Carets";
+import AnalyticsPanel from "./components/charts/analytics/AnalyticsPanel";
 
-export default function DashboardClient({ events }: { events: EventRow[] }) {
+export default function DashboardClient({
+  events,
+  initialView,
+}: {
+  events: EventRow[];
+  initialView?: string;
+}) {
   // Normalize IDs
   const normalize = (rows: EventRow[]) =>
     rows.map((e) => ({
@@ -35,11 +43,35 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  // ⭐ Mobile selection mode
+  // Mobile selection mode
   const [mobileSelectMode, setMobileSelectMode] = useState(false);
 
-  // ⭐ NEW: Long‑press toggle
+  // Long‑press toggle
   const [longPressEnabled, setLongPressEnabled] = useState(true);
+
+  // View (Events | Analytics) from URL
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initial = initialView === "analytics" ? "analytics" : "events";
+  const [view, setViewState] = useState<"events" | "analytics">(initial);
+
+  const setView = (next: "events" | "analytics") => {
+    setViewState(next);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("view", next);
+    router.push(`/teacher?${params.toString()}`);
+  };
+
+  const normalizeRisk = (level: string) => level.toUpperCase();
+
+  const riskCounts = {
+    SAFE: filteredEvents.filter(e => normalizeRisk(e.riskLevel) === "SAFE").length,
+    LOW: filteredEvents.filter(e => normalizeRisk(e.riskLevel) === "LOW").length,
+    MEDIUM: filteredEvents.filter(e => normalizeRisk(e.riskLevel) === "MEDIUM").length,
+    HIGH: filteredEvents.filter(e => normalizeRisk(e.riskLevel) === "HIGH").length,
+    CRITICAL: filteredEvents.filter(e => normalizeRisk(e.riskLevel) === "CRITICAL").length,
+  };
+
 
   // Load long‑press preference
   useEffect(() => {
@@ -78,7 +110,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
       try {
         const parsed = JSON.parse(stored) as string[];
         setArchivedIds(new Set(parsed));
-      } catch {}
+      } catch { }
     }
   }, []);
 
@@ -270,6 +302,28 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
         </button>
       </div>
 
+      {/* TABS */}
+      <div className="flex items-center border-b border-gray-700 mb-4">
+        <button
+          onClick={() => setView("events")}
+          className={`px-3 py-2 text-sm font-medium ${view === "events"
+            ? "text-gray-100 border-b-2 border-gray-100"
+            : "text-gray-400 hover:text-gray-100"
+            }`}
+        >
+          Events
+        </button>
+        <button
+          onClick={() => setView("analytics")}
+          className={`px-3 py-2 text-sm font-medium ${view === "analytics"
+            ? "text-gray-100 border-b-2 border-gray-100"
+            : "text-gray-400 hover:text-gray-100"
+            }`}
+        >
+          Analytics
+        </button>
+      </div>
+
       {/* MOBILE FILTERS */}
       <div className="lg:hidden mb-4">
         <FiltersPanel
@@ -281,94 +335,146 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
         />
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* LEFT COLUMN */}
-        <div className="flex-1 max-w-[900px] flex flex-col gap-6">
-          <div className="lg:hidden">
-            <SessionDetails
-              events={visibleEvents}
-              selectedSessionId={selectedSessionId}
-              onSelectSession={setSelectedSessionId}
+      {view === "events" ? (
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* LEFT COLUMN */}
+          <div className="flex-1 max-w-[900px] flex flex-col gap-6">
+            <div className="lg:hidden">
+              <SessionDetails
+                events={visibleEvents}
+                selectedSessionId={selectedSessionId}
+                onSelectSession={setSelectedSessionId}
+              />
+            </div>
+
+            <ChartsPanel
+              filteredEvents={filteredEvents}
+              riskCounts={riskCounts}
             />
+
+
+            <div id="events-table">
+              <EventsTable
+                events={tableEvents}
+                onSelectEvent={handleSelectEvent}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelect}
+                onToggleSelectAll={toggleSelectAll}
+                onArchiveSelected={handleArchiveSelected}
+                sortKey={sortKey}
+                sortDir={sortDir}
+                onSortChange={toggleSort}
+                mobileSelectMode={mobileSelectMode}
+                setMobileSelectMode={setMobileSelectMode}
+                longPressEnabled={longPressEnabled}
+              />
+            </div>
           </div>
 
-          <ChartsPanel filteredEvents={visibleEvents} />
+          {/* RIGHT COLUMN */}
+          <div className="w-full lg:w-80 flex-shrink-0 flex flex-col gap-4">
+            <div className="hidden lg:block">
+              <FiltersPanel
+                events={baseEvents}
+                onFilterChange={(filtered, isFiltered) => {
+                  setFilteredEvents(filtered);
+                  setFiltersActive(isFiltered);
+                }}
+              />
+            </div>
 
-          <div id="events-table">
-            <EventsTable
-              events={tableEvents}
-              onSelectEvent={handleSelectEvent}
-              selectedIds={selectedIds}
-              onToggleSelect={toggleSelect}
-              onToggleSelectAll={toggleSelectAll}
-              onArchiveSelected={handleArchiveSelected}
-              sortKey={sortKey}
-              sortDir={sortDir}
-              onSortChange={toggleSort}
-              mobileSelectMode={mobileSelectMode}
-              setMobileSelectMode={setMobileSelectMode}
-              longPressEnabled={longPressEnabled}
-            />
+            {/* DESKTOP ONLY — Jump to Events */}
+            <div className="hidden lg:flex justify-center">
+              <button
+                onClick={() =>
+                  document
+                    .getElementById("events-table")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
+                className="text-blue-400 hover:text-blue-300 text-sm underline font-bold inline-flex items-center gap-1"
+              >
+                Jump to Events
+                <CaretUp className="h-3 w-3 align-middle" />
+              </button>
+            </div>
+
+            <div className="hidden lg:block">
+              <SessionDetails
+                events={visibleEvents}
+                selectedSessionId={selectedSessionId}
+                onSelectSession={setSelectedSessionId}
+              />
+            </div>
+
+            {/* ARCHIVE PANEL */}
+            <div className="block lg:block pb-16 md:pb-0">
+              <ArchiveManager
+                archivedIds={archivedIds}
+                allEvents={baseEvents}
+                onRestore={(id) => {
+                  setArchivedIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(String(id));
+                    return next;
+                  });
+                }}
+                onRestoreAll={() => setArchivedIds(new Set())}
+                longPressEnabled={longPressEnabled}
+                setLongPressEnabled={setLongPressEnabled}
+              />
+            </div>
           </div>
         </div>
-
-        {/* RIGHT COLUMN */}
-        <div className="w-full lg:w-80 flex-shrink-0 flex flex-col gap-4">
-          <div className="hidden lg:block">
-            <FiltersPanel
-              events={baseEvents}
-              onFilterChange={(filtered, isFiltered) => {
-                setFilteredEvents(filtered);
-                setFiltersActive(isFiltered);
-              }}
-            />
+      ) : (
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1 max-w-[900px] flex flex-col gap-6">
+            {/* ANALYTICS VIEW */}
+            {view === "analytics" && (
+              <AnalyticsPanel filteredEvents={filteredEvents} />
+            )}
           </div>
 
-          {/* DESKTOP ONLY — Jump to Events */}
-          <div className="hidden lg:flex justify-center">
-            <button
-              onClick={() =>
-                document
-                  .getElementById("events-table")
-                  ?.scrollIntoView({ behavior: "smooth" })
-              }
-              className="text-blue-400 hover:text-blue-300 text-sm underline font-bold inline-flex items-center gap-1"
-            >
-              Jump to Events
-              <CaretUp className="h-3 w-3 align-middle" />
-            </button>
-          </div>
+          <div className="w-full lg:w-80 flex-shrink-0 flex flex-col gap-4">
+            <div className="hidden lg:block">
+              <FiltersPanel
+                events={baseEvents}
+                onFilterChange={(filtered, isFiltered) => {
+                  setFilteredEvents(filtered);
+                  setFiltersActive(isFiltered);
+                }}
+              />
+            </div>
 
-          <div className="hidden lg:block">
-            <SessionDetails
-              events={visibleEvents}
-              selectedSessionId={selectedSessionId}
-              onSelectSession={setSelectedSessionId}
-            />
-          </div>
+            <div className="hidden lg:block">
+              <SessionDetails
+                events={visibleEvents}
+                selectedSessionId={selectedSessionId}
+                onSelectSession={setSelectedSessionId}
+              />
+            </div>
 
-          {/* ⭐ ARCHIVE PANEL — padded on mobile */}
-          <div className="block lg:block pb-16 md:pb-0">
-            <ArchiveManager
-              archivedIds={archivedIds}
-              allEvents={baseEvents}
-              onRestore={(id) => {
-                setArchivedIds((prev) => {
-                  const next = new Set(prev);
-                  next.delete(String(id));
-                  return next;
-                });
-              }}
-              onRestoreAll={() => setArchivedIds(new Set())}
-              longPressEnabled={longPressEnabled}
-              setLongPressEnabled={setLongPressEnabled}
-            />
+            <div className="block lg:block pb-16 md:pb-0">
+              <ArchiveManager
+                archivedIds={archivedIds}
+                allEvents={baseEvents}
+                onRestore={(id) => {
+                  setArchivedIds((prev) => {
+                    const next = new Set(prev);
+                    next.delete(String(id));
+                    return next;
+                  });
+                }}
+                onRestoreAll={() => setArchivedIds(new Set())}
+                longPressEnabled={longPressEnabled}
+                setLongPressEnabled={setLongPressEnabled}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* ⭐ MOBILE SELECTION MODE ACTION BAR */}
-      {mobileSelectMode && (
+      {/* MOBILE SELECTION MODE ACTION BAR */}
+      {mobileSelectMode && view === "events" && (
         <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 p-4 pb-16 flex justify-between items-center md:hidden z-50">
           <button
             onClick={() => {
@@ -393,7 +499,7 @@ export default function DashboardClient({ events }: { events: EventRow[] }) {
       )}
 
       {/* MODAL */}
-      {selectedEvent !== null && selectedIndex !== null && (
+      {view === "events" && selectedEvent !== null && selectedIndex !== null && (
         <PromptDetailModal
           event={selectedEvent}
           index={selectedIndex}

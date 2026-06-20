@@ -1,32 +1,33 @@
 "use client";
 
-import ChartWrapper from "./ChartWrapper";
-import { RISK_COLORS, CHART_COLORS } from "../../../types/theme";
+import ChartWrapper from "../ChartWrapper";
+import { EventRow } from "../../../../types/EventRow";
 
-interface RiskChartProps {
+interface Props {
   riskCounts: Record<string, number>;
   xLabel: string;
   yLabel: string;
   titleTooltip: string;
 }
 
-export default function RiskChart({
+export default function EventsRiskChart({
   riskCounts,
   xLabel,
   yLabel,
   titleTooltip,
-}: RiskChartProps) {
+}: Props) {
+  // Match Analytics risk categories
   const VALID_RISKS = ["SAFE", "LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
   const categories = VALID_RISKS.filter((key) => key in riskCounts);
   const values = categories.map((key) => riskCounts[key] ?? 0);
 
-  // Convert Tailwind classes → actual hex colors for ECharts
+  // Tailwind → hex colors (same as Analytics)
   const riskHexColors: Record<string, string> = {
-    SAFE: "#166534", // green-800
-    LOW: "#854d0e", // yellow-800
-    MEDIUM: "#9a3412", // orange-800
-    HIGH: "#b91c1c", // red-700
+    SAFE: "#166534",     // green-800
+    LOW: "#854d0e",      // yellow-800
+    MEDIUM: "#9a3412",   // orange-800
+    HIGH: "#b91c1c",     // red-700
     CRITICAL: "#7f1d1d", // red-900
   };
 
@@ -35,14 +36,11 @@ export default function RiskChart({
     animation: false,
 
     title: {
-      text: "Risk Level Distribution",
+      text: "",
       left: "center",
       textStyle: { color: "#e5e7eb", fontSize: 12 },
       subtext: titleTooltip,
-      subtextStyle: {
-        color: "#9ca3af",
-        fontSize: 10,
-      },
+      subtextStyle: { color: "#9ca3af", fontSize: 12 },
       triggerEvent: true,
     },
 
@@ -83,10 +81,7 @@ export default function RiskChart({
       name: xLabel,
       nameLocation: "middle",
       nameGap: 40,
-      nameTextStyle: {
-        color: "#e5e7eb",
-        fontSize: 11,
-      },
+      nameTextStyle: { color: "#e5e7eb", fontSize: 11 },
     },
 
     yAxis: {
@@ -97,10 +92,7 @@ export default function RiskChart({
       name: yLabel,
       nameLocation: "middle",
       nameGap: 45,
-      nameTextStyle: {
-        color: "#e5e7eb",
-        fontSize: 11,
-      },
+      nameTextStyle: { color: "#e5e7eb", fontSize: 11 },
     },
 
     series: [
@@ -109,11 +101,37 @@ export default function RiskChart({
         data: values,
         barWidth: "60%",
         itemStyle: {
-          color: CHART_COLORS.riskBars,
+          color: {
+            type: "linear",
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: "#ffffffaa" },   // bright highlight
+              { offset: 0.15, color: "#e5e7eb88" }, // soft silver
+              { offset: 0.35, color: "#9ca3afcc" }, // strong reflection
+              { offset: 0.55, color: "#6b7280ff" }, // metallic mid-tone
+              { offset: 0.75, color: "#374151ff" }, // deep shadow
+              { offset: 1, color: "#111827ff" },    // darkest base
+            ],
+          },
+          borderColor: "#f3f4f6aa",
+          borderWidth: 1.2,
+          shadowBlur: 12,
+          shadowColor: "rgba(255,255,255,0.25)",
+          shadowOffsetY: 3,
         },
       },
     ],
+
   };
 
-  return <ChartWrapper option={option} />;
+  return (
+    <ChartWrapper
+      title="Risk Level Distribution"
+      description="Shows event counts by risk severity"
+      options={option}
+    />
+  );
 }

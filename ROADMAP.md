@@ -1,13 +1,14 @@
-## ⭐ **Teacher Dashboard — Master Restore Pack**  
+## ⭐ **Teacher Dashboard — Master Restore Pack (MCP‑Aligned Edition)**  
 ### *Canonical Project Context & Architecture Specification*
 
 This README defines the **authoritative, end‑to‑end context** for the Teacher Dashboard project, including:
 
 - UI/UX baseline (Phase 7)  
-- Safety pipeline  
+- Deterministic safety pipeline  
 - Agentic security layer  
 - Safe RAG integration  
 - Agent ecosystem  
+- MCP‑aligned activation points  
 - Full roadmap (Phases 8–14)  
 - Design philosophy  
 
@@ -130,7 +131,7 @@ The system uses **Safe RAG**, not general RAG.
 
 ---
 
-# 🤖 **Agent Ecosystem**
+## 🤖 **Agent Ecosystem**
 
 ### **Safety Pipeline Agents**
 - Classification Agent  
@@ -175,89 +176,199 @@ The system uses **Safe RAG**, not general RAG.
 
 ---
 
-# 🗺️ **Roadmap (Phases 8–14)**  
-## *All phases include agentic + Safe RAG integration where appropriate.*
+## 🗺️ **Roadmap (Phases 8–14)**  
+## *Now updated to reflect MCP‑aligned activation points.*
 
 ---
 
-### ⭐ **Phase 8 — Analytics Panel**
+## ⭐ **Phase 8 — Analytics Panel (Agents Begin, MCP Not Required Yet)**  
+**Purpose:** Insight generation, not autonomy.
+
+### Features
 - Risk distribution  
 - Injection timeline  
 - Latency histogram  
 - Student breakdowns  
 - Model comparison  
 - Chart interactivity  
-**Agentic:** Analytics Agent, Risk Insight Agent  
-**Safe RAG:** Policy‑grounded trend explanations  
+
+### Agentic Activation
+- **Trend Analysis Agent**  
+- **Risk Insight Agent**  
+- **Student Behavior Summary Agent**
+
+### Safe RAG
+- Policy‑grounded trend explanations  
+
+### MCP Relevance
+- **LOW**  
+Agents are read‑only and do not require tool permissions or governance.
 
 ---
 
-### ⭐ **Phase 9 — Session Replay Enhancements**
+## ⭐ **Phase 9 — Session Replay Enhancements (Agents Become Narrative)**  
+**Purpose:** Replay intelligence.
+
+### Features
 - Full chronological replay  
 - Risky turn highlighting  
 - Raw vs safe comparison  
-**Agentic:** Replay Narration Agent, Injection Trace Agent  
-**Safe RAG:** Policy‑grounded narration  
+
+### Agentic Activation
+- **Replay Narration Agent**  
+- **Injection Trace Agent**  
+- **Comparison Agent**
+
+### Safe RAG
+- Policy‑grounded narration  
+
+### MCP Relevance
+- **MEDIUM**  
+Agents begin calling internal utilities, but still no write‑actions.
 
 ---
 
-### ⭐ **Phase 10 — Admin Tools & Governance**
+# ⭐ **Phase 10 — Admin Tools & Governance (MCP Foundations Begin)**  
+**Purpose:** Governance, permissions, identity.
+
+### Features
 - Teacher notes  
 - Custom thresholds  
 - Categories  
 - Audit logs  
-**Agentic:** Identity registry, permission scopes, allowlists, agent audit logs  
-**Safe RAG:** Policy retrieval for governance decisions  
+
+### Agentic Activation
+- **Identity Registry Agent**  
+- **Permission Scope Agent**  
+- **Tool‑Use Allowlist Agent**  
+- **Agent Audit Log Agent**  
+- **Governance Consistency Agent**
+
+### Safe RAG
+- Policy retrieval for governance decisions  
+
+### MCP Relevance
+- **HIGH**  
+This is where MCP‑style identity, permissions, and tool governance become required.
 
 ---
 
-### ⭐ **Phase 10.5 — Explainability & Challenge System**
+## ⭐ **Phase 10.5 — Explainability & Challenge System (MCP‑Style Tool Calls)**  
+**Purpose:** Explainability + challenge workflows.
+
+### Features
 - Explain classification modal  
 - Challenge workflow  
 - Override classification/risk  
-**Agentic:** Reasoning trace viewer, challenge agent, override agent  
-**Safe RAG:** Explainability RAG + challenge‑grounding RAG  
+
+### Agentic Activation
+- **Reasoning Trace Viewer Agent**  
+- **Challenge Agent**  
+- **Override Agent**
+
+### Safe RAG
+- Explainability RAG  
+- Challenge‑grounding RAG  
+
+### MCP Relevance
+- **VERY HIGH**  
+Agents now call tools, retrieve policy, validate overrides — this is MCP‑style behavior.
 
 ---
 
-### ⭐ **Phase 11 — Real‑Time Monitoring**
+## ⭐ **Phase 11 — Real‑Time Monitoring (MCP‑Style Background Agents)**  
+**Purpose:** Live safety monitoring.
+
+### Features
 - Live event stream  
 - Live risk alerts  
 - Live injection detection  
-**Agentic:** Spike detector, burst detector, latency anomaly agent  
-**Safe RAG:** Policy‑grounded alert explanations  
+
+### Agentic Activation
+- **Risk Spike Detector Agent**  
+- **Injection Burst Agent**  
+- **Latency Anomaly Agent**  
+- **Live Session Watcher Agent**
+
+### Safe RAG
+- Policy‑grounded alert explanations  
+
+### MCP Relevance
+- **CRITICAL**  
+Agents now behave like MCP background services.
 
 ---
 
-### ⭐ **Phase 12 — AI Safety Automation Layer**
+## ⭐ **Phase 12 — AI Safety Automation Layer (Autonomous MCP Agents)**  
+**Purpose:** Controlled autonomy.
+
+### Features
 - Auto‑flagging  
 - Auto‑tagging  
 - Auto‑summaries  
-**Agentic:** Safe sandbox, policy‑as‑code, risk‑tiered permissions  
-**Safe RAG:** Policy‑grounded automation summaries  
+
+### Agentic Activation
+- **Auto‑Flag Agent**  
+- **Auto‑Tag Agent**  
+- **Auto‑Archive Agent**  
+- **Auto‑Summary Agent**  
+- **Auto‑Risk Scoring Agent**
+
+### Safe RAG
+- Policy‑grounded automation summaries  
+
+### MCP Relevance
+- **MAXIMUM**  
+Agents now take actions; MCP governance is mandatory.
 
 ---
 
-### ⭐ **Phase 13 — Multi‑Teacher / Multi‑Class Support**
+## ⭐ **Phase 13 — Multi‑Teacher / Multi‑Class Support (Tenant‑Scoped MCP)**  
+**Purpose:** Multi‑tenant isolation.
+
+### Features
 - Multi‑tenant support  
 - RBAC  
 - Class‑level analytics  
-**Agentic:** Tenant‑scoped agents  
-**Safe RAG:** Tenant‑scoped corpora  
+
+### Agentic Activation
+- **Tenant‑Scoped Agents**
+
+### Safe RAG
+- Tenant‑scoped corpora  
+
+### MCP Relevance
+- **SYSTEM‑LEVEL**  
+Agents must be tenant‑aware and permission‑scoped.
 
 ---
 
-### ⭐ **Phase 14 — Production Hardening**
+## ⭐ **Phase 14 — Production Hardening (Compliance‑Grade MCP)**  
+**Purpose:** Enterprise‑grade integrity.
+
+### Features
 - Rate limiting  
 - Logging  
 - Monitoring  
 - Load testing  
-**Agentic:** Agent telemetry, anomaly detection, SBOM manifests  
-**Safe RAG:** Corpus versioning, integrity checks, retrieval logging  
+
+### Agentic Activation
+- **Agent Telemetry Agent**  
+- **Agent Anomaly Detector**  
+- **SBOM‑Style Agent Manifest Generator**
+
+### Safe RAG
+- Corpus versioning  
+- Integrity checks  
+- Retrieval logging  
+
+### MCP Relevance
+- **FULL MCP GOVERNANCE**  
+This is where the system reaches compliance‑grade agent governance.
 
 ---
 
-# 🎓 **Teacher Experience Philosophy**
+## 🎓 **Teacher Experience Philosophy**
 
 Agents and RAG **never** complicate the teacher’s workflow.
 

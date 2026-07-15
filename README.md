@@ -19,7 +19,7 @@ A real‑time classroom‑scale AI monitoring platform with a teacher dashboard,
 
 ---
 
-# <span>📌</span> **Overview**
+## <span>📌</span> **Overview**
 
 <details>
 <summary><strong>Principal‑level summary</strong></summary>
@@ -56,7 +56,7 @@ flowchart TD
 
 ---
 
-# <span>🖼</span> **Screenshots**
+## <span>🖼</span> **Screenshots**
 
 <details>
 <summary><strong>Click to expand</strong></summary>
@@ -74,7 +74,7 @@ flowchart TD
 
 ---
 
-# <span>✨</span> **Core Capabilities**
+## <span>✨</span> **Core Capabilities**
 
 <details>
 <summary><strong>Click to expand</strong></summary>
@@ -100,7 +100,7 @@ flowchart TD
 
 ---
 
-# <span>🏗</span> **Architecture**
+## <span>🏗</span> **Architecture**
 
 <details>
 <summary><strong>System‑level architecture diagram</strong></summary>
@@ -128,7 +128,7 @@ flowchart TD
 
 ---
 
-# <span>📊</span> **Teacher Dashboard**
+## <span>📊</span> **Teacher Dashboard**
 
 <details>
 <summary><strong>Operational intelligence for educators</strong></summary>
@@ -155,7 +155,7 @@ flowchart LR
 
 ---
 
-# <span>💬</span> **Student Experience**
+## <span>💬</span> **Student Experience**
 
 <details>
 <summary><strong>Safe, guided LLM interaction</strong></summary>
@@ -172,7 +172,7 @@ flowchart TD
 
 ---
 
-# <span>🗄</span> **Data Model**
+## <span>🗄</span> **Data Model**
 
 <details>
 <summary><strong>Event‑sourced telemetry model</strong></summary>
@@ -195,7 +195,7 @@ flowchart TD
 
 ---
 
-# <span>🧰</span> **Tech Stack**
+## <span>🧰</span> **Tech Stack**
 
 <details>
 <summary><strong>Click to expand</strong></summary>
@@ -221,7 +221,7 @@ flowchart TD
 
 ---
 
-# <span>⚙️</span> **Installation & Setup**
+## <span>⚙️</span> **Installation & Setup**
 
 <details>
 <summary><strong>Click to expand</strong></summary>
@@ -262,7 +262,7 @@ npm run dev
 
 ---
 
-# <span>📂</span> **Project Structure**
+## <span>📂</span> **Project Structure**
 
 <details>
 <summary><strong>Click to expand</strong></summary>
@@ -292,7 +292,7 @@ promptshield-live/
 
 ---
 
-# <span>🗺</span> **Roadmap**
+## <span>🗺</span> **Roadmap**
 
 <details>
 <summary><strong>Click to expand</strong></summary>
